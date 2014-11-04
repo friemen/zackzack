@@ -1,0 +1,121 @@
+
+body {
+    font-family: helvetica,arial;
+}
+
+.selected {
+    background-color: #C2E0F4;
+}
+
+th, td {
+    text-align: left;
+    border: solid #777777;
+    border-top: 1px;
+    border-bottom: 1px;
+    border-right: 0px;
+    border-left: 0px;
+    padding: 4px;
+} 
+
+th {
+    background: #f0f0f0;
+}
+
+td {
+    cursor: pointer;
+}
+
+.def-table {
+    border-collapse: collapse;
+    background: #ffffff;
+    margin-left: 0px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    box-shadow: 4px 4px 5px #888888;
+}
+
+.def-paneltitle {
+    font-size: 1em;
+    font-weight: bold;
+    color: #777;
+    text-align: left;
+    margin-left: 4px;
+}
+
+
+.def-panel {
+    background: #fff;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+
+.def-field:focus {
+    border: 2px solid #ff8080;
+    border-radius: 4px;
+}
+
+
+.def-field {
+    width: 16em;
+    margin-left: 4px;
+    margin-bottom: 4px;
+    background: #ffffff;
+    border: 1px solid #a0a0a0;
+    border-radius: 4px;
+    height: 1.8em;
+}
+
+label {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.def-labeledwidget {
+    margin-bottom: 4px;
+}
+
+.def-label {
+    width: 6em;
+    float: left;
+}
+
+.error-message {
+    color: #f00000;
+    margin-left: 4px;
+}
+
+.def-button {
+    margin-left: 4px;
+    margin-bottom: 8px;
+    min-width: 6em;
+    background: #3498db;
+    background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
+    background-image: -moz-linear-gradient(top, #3498db, #2980b9);
+    background-image: -ms-linear-gradient(top, #3498db, #2980b9);
+    background-image: -o-linear-gradient(top, #3498db, #2980b9);
+    background-image: linear-gradient(to bottom, #3498db, #2980b9);
+    -webkit-border-radius: 4;
+    -moz-border-radius: 4;
+    border:0 none;
+    border-radius: 4px;
+    font-family: Arial;
+    color: #ffffff;
+    padding: 2px 10px 2px 10px;
+    text-decoration: none;
+}
+
+.def-button:hover {
+    background: #3cb0fd;
+    background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+    background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+    background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
+    background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
+    background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+    text-decoration: none;
+}
+
+.def-button:disabled {
+    background: #A6A6A6;
+    text-decoration: none;
+}
