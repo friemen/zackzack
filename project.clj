@@ -27,11 +27,11 @@
          :test-paths ["test/clj" "test/cljs"]
          :resource-paths ["dev-resources"]
          :resource {:resource-paths [["resources/public/js" {:target-path "dev-resources/public/js"}]]}
-         :dependencies [[ring "1.2.1"]
-                        [compojure "1.1.6"]
-                        [enlive "1.1.4"]]
-         :plugins [[com.cemerick/austin "0.1.3"]
-                   [com.cemerick/clojurescript.test "0.2.1"]]
+         :dependencies [[ring "1.3.1"]
+                        [compojure "1.2.1"]
+                        [enlive "1.1.5"]]
+         :plugins [[com.cemerick/austin "0.1.5"]
+                   [com.cemerick/clojurescript.test "0.3.1"]]
         
          :injections [(require '[ring.server :as http :refer [run]]
                                'cemerick.austin.repls)

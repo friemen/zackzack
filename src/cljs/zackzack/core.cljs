@@ -5,89 +5,10 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]))
 
-;; This is work in progress. But comments are welcome.
-;; Running code is hosted here: http://www.falkoriemenschneider.de/om-example/
-
-;; I prefer a strict separation between presentation logic and markup
-;; (the view). The Om examples I'm aware of tend to mix both aspects
-;; a bit, however, IMO using channels as proposed by @swannodette is
-;; the key to strong decoupling.
-
-;; I'm interested in boring enterprise style forms-over-data UIs.  I
-;; like to be able to succinctly specify the content of components
-;; without mixing it up with presentation logic. However, things like
-;; state, actions, validation, rules, inter-component and remote
-;; communication need their place. I prefer to implement these using
-;; ordinary language features like atoms and pure functions, perhaps
-;; augmented with access to channels, if necessary.
-
-
-;; Here are some points that I have to make up my mind about:
-;;
-;; Which rules determine the process+channel topology?
-;;
-;; By using render functions I come to ask myself if everything needs
-;; to be a React component. Is just the uniformity beneficial enough?
-;;
-;; How can input focus be controlled?  The decision, where to take the
-;; focus to, could be part of an action or, more general, in an
-;; event-handler. React basically supports this:
-;; http://facebook.github.io/react/docs/working-with-the-browser.html
-
-
-;; Here are my decisions that explain why the code looks the way it
-;; does:
-
-;; State is kept in a global atom, according to Om's pgm model.
-
-;; There is a generic form component that starts a generic CSP-style
-;; controller process and renders a model describing the components
-;; UI.
-
-;; Rendering as well as the controller process is in general separated
-;; from the Om component definition.
-
-;; Each form component has one channel that takes every event
-;; submitted by JS event listeners. Any user input is routed as
-;; :update event through this channel and the application state is
-;; updated immediately with the result of a field specific parser
-;; function [string -> anything] application.
-
-;; After processing an :update, validation with respect to the
-;; updated field is applied. This results in a :message value
-;; stored in the fields map (not yet implemented).
-
-;; Actions (the stuff that happens for example upon button clicks) are
-;; triggered by :action events and should ideally be pure functions of
-;; the form [state event -> state]. If they communicate with a server
-;; or another component they would either use their own or a foreign
-;; components channel, respectively.  In case of accessing channels
-;; action functions are no longer pure, so should be named with a !
-;; suffix.
-
-;; After processing of an :update or :action event a rules function
-;; [state -> state] is called that ensures that invariants are
-;; re-established.
-
-;; To enable communication among controller processes the channels are
-;; globally defined before the actions. The channels are passed as
-;; part of the component model to the controller and to render
-;; functions. An action that wishes to send an event to a different
-;; process would use type :action, which, in turn, triggers the execution
-;; of an arbitrary action function.
-
-
-;; TODO
-;; Validation
-;; Formatting / parsing of values
-;; Async invocation of services
-;; Inter-component communication
-;; Controlling input focus
 
 ;; If you read the code below, please note that the first part is
 ;; reusable, technical stuff. The second part is the implementation
 ;; of specific "business" functionality.
-
 
 ;; ----------------------------------------------------------------------------
 ;; Utilities
@@ -270,7 +191,7 @@
 (defn validator
   [state path value]
   (let [message-path (conj path :message)
-        validate-fn #(if (empty? %) "Must not be empty.")] ;TODO this is a dummy
+        validate-fn #(if (empty? %) "Please enter a value.")] ;TODO this is a dummy
     (assoc-in state message-path (validate-fn value))))
 
 
@@ -432,6 +353,14 @@
     state))
 
 
+(defn reset-address
+  [state event]
+  (-> state
+      (assoc-in  [:edit-index] nil)
+      (update-in [:details] update-all :value fields nil)
+      (update-in [:details] update-all :message fields nil)))
+
+
 (defn delete-addresses
   [state event]
   (remove-selected state [:addresses]))
@@ -468,7 +397,7 @@
                                              (textfield "street")
                                              (selectbox "city")
                                              (datepicker "birthday")
-                                             (button "add" :text "Add Address")])
+                                             (button "add" :text "Add Address") (button "reset")])
                            (table "addresses"
                                   :label "Addresses"
                                   :columns [(column "name")
@@ -479,7 +408,8 @@
    :ch addressbook-ch
    :actions {:add    add-address
              :edit   edit-address
-             :delete delete-addresses}
+             :delete delete-addresses
+             :reset  reset-address}
    :rules addressbook-rules})
 
 
@@ -501,7 +431,11 @@
                      :items [{:name "Mini" :street "Downstreet" :city "Duckberg" :birthday "01.01.1950"}
                              {:name "Donald" :street "Upperstreet" :city "Duckberg" :birthday "01.01.1955"}]}}))
 
-(om/root form-component
-         state-ref
-         {:target (. js/document (getElementById "app"))
-          :opts {:model addressbook-view}})
+(defn refresh
+  []
+  (om/root form-component
+           state-ref
+           {:target (. js/document (getElementById "app"))
+            :opts {:model addressbook-view}}))
+
+(refresh)
