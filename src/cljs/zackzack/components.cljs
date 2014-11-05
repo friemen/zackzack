@@ -193,9 +193,8 @@
         :init
         (om/transact! state rules)
         :update 
-        (let [path (->> event :state om/path (drop (-> spec :path count)) vec)]
-          ;; TODO the way the path is calculated is incorrect, this is only a hack
-          #_(prn path)
+        (let [path (->> event :state om/path
+                        (drop (-> state om/path count)) vec)]
           (om/transact! state #(let [{:keys [state key value parser] :or {parser identity}} event
                                      parsed-value (parser value)]
                                  (-> %

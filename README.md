@@ -14,15 +14,15 @@ I prefer a strict separation between presentation logic and markup
 a bit, however, IMO using channels as proposed by @swannodette is
 the key to strong decoupling.
 
-I'm interested in boring enterprise style forms-over-data UIs.  I
-like to be able to succinctly specify the content of components
-without mixing it up with presentation logic. However, things like
-state, actions, validation, rules, inter-component and remote
-communication need their place. I prefer to implement these using
-ordinary language features like atoms and pure functions, perhaps
-augmented with access to channels, if necessary.
+I'm interested in boring enterprise style forms-over-data UIs.  I like
+to succinctly specify the content of views without mixing up the
+specification with presentation logic. However, things like state,
+actions, validation, rules, inter-component and remote communication
+need a place. I prefer to implement these using ordinary language
+features like atoms and pure functions, perhaps augmented with access
+to channels, if necessary.
 
-This is how I like to build boring UIs:
+This is how I like boring UIs to look alike:
 
 ```clojure
 ;; Component channels
@@ -115,14 +115,13 @@ This is how I like to build boring UIs:
 ```
 
 As you can see there is almost no access to technical APIs left, I
-replaced direct HTML building in favor of a internal DSL which is as
-such certainly suited only for specific style of UIs. It's likely that
-a concrete project will have to invent it's own DSL, but it may borrow
-ideas from this prototype. The advantage of an additional layer is
-that it becomes almost trivial to create and understand a UI like
-this.  However, I currently don't have a proof that I can maintain
-this simplistic style for all cases (which is why I started this
-prototype).
+added a thin DSL layer on top of the React DOM API, you may consider
+it a means to parameterize component rendering. However, it's likely that a
+concrete project will have to invent it's own DSL to suit its
+needs. The advantage of a DSL layer is that it becomes almost trivial
+to create and understand a UI like this. However, I currently don't
+have a proof that I can maintain this simplistic style for all cases
+(which is why I started this prototype).
 
 
 ## Open questions
@@ -142,16 +141,13 @@ http://facebook.github.io/react/docs/working-with-the-browser.html
 
 ## My ideas and decisions so far
 
-Here are my decisions that explain why the code looks the way it
-does:
-
 State is kept in a global atom, according to Om's pgm model.
 
 There is a generic view component that starts a generic CSP-style
 controller process and renders a view according to the UI specification.
 
 Rendering as well as the controller process is in general separated
-from the Om component definition.
+from the Om component reification.
 
 Each form component has one channel that takes every event
 submitted by JS event listeners. Any user input is routed as
@@ -184,6 +180,7 @@ of an arbitrary action function.
 
 
 ## TODOs
+* Panels need layout
 * Async invocation of services
 * Inter-component communication
 * Validation
