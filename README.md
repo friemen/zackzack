@@ -114,14 +114,15 @@ This is how I like to build boring UIs:
    :rules addressbook-rules})
 ```
 
-As you can see there is no almost no access to technical APIs left, I
-replaced direct HTML building in favor of a internal DSL which is
-certainly suited only for certain style of UIs. It's likely that a
-concrete project will have to invent it's own DSL, and it may borrow
-ideas from this prototype. The advantage adding an additional level is
+As you can see there is almost no access to technical APIs left, I
+replaced direct HTML building in favor of a internal DSL which is as
+such certainly suited only for certain style of UIs. It's likely that
+a concrete project will have to invent it's own DSL, but it may borrow
+ideas from this prototype. The advantage of an additional layer is
 that it becomes almost trivial to create and understand a UI like
-this.  However, I currently don't a proof that I can maintain this
-simplistic style for all cases.
+this.  However, I currently don't have a proof that I can maintain
+this simplistic style for all cases (which is why I started this
+prototype).
 
 
 ## Open questions
