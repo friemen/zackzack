@@ -173,39 +173,44 @@ controller process and renders a view according to the UI specification.
 Rendering as well as the controller process is in general separated
 from the Om component reification.
 
-Each form component has one channel that takes every event
+Each view component has one channel that takes every event
 submitted by JS event listeners. Any user input is routed as
-:update event through this channel and the application state is
+`:update` event through this channel and the application state is
 updated immediately with the result of a field specific parser
 function [string -> anything] application.
 
-After processing an :update, validation with respect to the
-updated field is applied. This results in a :message value
-stored in the fields map (not yet implemented).
+After processing an `:update`, validation with respect to the updated
+field is applied (currently not fully implemented). This results in a
+`:message` value stored in the fields map.
 
 Actions (the stuff that happens for example upon button clicks) are
-triggered by :action events and should ideally be pure functions of
+triggered by `:action` events and should ideally be pure functions of
 the form [state event -> state]. If they communicate with a server or
 another component they would either use their own or a foreign
 components channel, respectively.  In case of accessing channels
 action functions are no longer pure, so should be named with a
 trailing !.
 
-After processing of an :update or :action event a rules function
-[state -> state] is called that ensures that invariants are
-re-established.
+Remote communication is done asynchronously. Upon receipt of the
+response the callback puts an `:action` event to the components
+channel, where the content of the response is held as `:payload`
+value. Thus, payload processing takes the same way as action
+processing.
 
-To enable communication among controller processes the channels are
-defined before the actions. The channels are passed as
-part of the component model to the controller and to render
-functions. An action that wishes to send an event to a different
-process would use type :action, which, in turn, triggers the execution
-of an arbitrary action function.
+After processing of an `:update` or `:action` event a rules function
+[state -> state] is called that ensures that invariants regarding
+the components state are re-established.
+
+To enable communication among controller processes the channels can be
+defined before the actions. The channels are passed as part of the
+component model to the controller and to render functions. An action
+that wishes to send an event to a different process would use type
+`:action`, which, in turn, triggers the execution of an arbitrary action
+function.
 
 
 ## TODOs
 * Panels need layout
-* Async invocation of services
 * Inter-component communication
 * Validation
 * Formatting / parsing of values
