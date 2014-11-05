@@ -7,7 +7,7 @@
 
 
 
-;; Component channels
+;; Component channel
 ;; ----------------------------------------------------------------------------
 
 (def addressbook-ch (chan))
@@ -73,7 +73,9 @@
 (defn merge-new-addresses
   [state {:keys [payload]}]
   (prn payload)
-  state)
+  (-> state
+      (assoc-in [:addresses :items] payload)))
+
 
 ;; ----------------------------------------------------------------------------
 ;; Rules are represented by a sole function [state -> state]
@@ -110,7 +112,7 @@
                                             (column "street")
                                             (column "city")
                                             (column "birthday")])
-                           (button "edit") (button "delete") #_(button "reload")])
+                           (button "edit") (button "delete") (button "reload")])
    :ch addressbook-ch
    :actions {:add    add-address
              :edit   edit-address

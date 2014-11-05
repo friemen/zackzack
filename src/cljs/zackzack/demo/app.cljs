@@ -13,11 +13,14 @@
 ;; Initial setup
 
 (def state-ref
-  (atom  {:active nil
-          :links {:addressbook {:disabled false
-                                :active false}
-                  :gallery {:disabled true
-                           :active false}}
+  (atom  {:active {:view-id "addressbook"
+                   :view-model addressbook-view}
+          :links {:addressbook
+                  {:disabled false
+                   :active true}
+                  :gallery
+                  {:disabled true
+                   :active false}}
           :addressbook {:edit-index nil
                         :details {:name {:value "foo"}
                                   :street {:value "bar"}

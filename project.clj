@@ -17,6 +17,7 @@
                  [cljs-ajax "0.3.3"]
                  ;; clj deps
                  [ring "1.3.1"]
+                 [ring-transit "0.1.2"]
                  [http-kit "2.1.19"]
                  [compojure "1.2.1"]]
 

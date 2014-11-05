@@ -5,13 +5,20 @@
             [hiccup.page :refer [html5]]
             [hiccup.form :as f]
             [compojure.core :refer [defroutes GET POST]]
-            [compojure.route :as route]))
+            [compojure.route :as route]
+            [ring.middleware.transit :refer [wrap-transit-response wrap-transit-body]]))
 
 ;;-------------------------------------------------------------------
 ;; default data
 
-(def addresses (atom {1 {:id 1 :name "Mini" :street "Foobar"}
-                      2 {:id 2 :name "Donald" :street "Barbaz"}}))
+(def initial-addresses [{:id 1 :name "Mini" :street "Downstreet" :city "Duckberg" :birthday "01.01.1950"}
+                        {:id 2 :name "Donald" :street "Upperstreet" :city "Duckberg" :birthday "01.01.1955"}])
+
+
+(def addresses (atom (->> initial-addresses
+                          (map (juxt :id identity))
+                          (into {}))))
+
 
 
 ;;-------------------------------------------------------------------
@@ -19,6 +26,7 @@
 
 (defroutes app
   (GET "/" [] (redirect "index.html"))
+  (GET "/addresses" [] {:status 200 :body (-> @addresses vals vec)})
   (route/resources "/")
   (route/not-found "Not found"))
 
@@ -41,6 +49,11 @@
   "Starts http server, which is reachable on http://localhost:8080"
   []
   (stop!)
-  (reset! http-server (httpkit/run-server (handler/site #'app) {:port 8080}))
+  (reset! http-server
+          (httpkit/run-server (-> #'app
+                                  wrap-transit-response
+                                  wrap-transit-body
+                                  handler/site)
+                              {:port 8080}))
   :started) 
 
