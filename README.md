@@ -7,43 +7,7 @@ This is work in progress. I just started with Om (beginning of Nov'14).
 A running demo is hosted [here](http://www.falkoriemenschneider.de/zackzack/).
 
 
-## Usage
-
-Clone this repo. Make sure you're on Java 1.7 or higher.
-
-### To enter interactive development
-
-* Create a REPL session.
-* `(run)` starts an embedded Jetty web server.
-* `(browser-repl)` starts a browser based ClojureScript REPL.
-* Use the URL displayed by browser-repl and connect with the browser
-  to it.
-* In a different tab in the same browser instance use
-  http://localhost:3000 to request index.html.
-* Open a cljs source file. Re-evaluate some code. If you changed data,
-  not just functions, then you also have to re-evaluate the `om/root`
-  expression (I wrapped it in a function, so `(refresh)` does the
-  trick if you changed the views layout).
-* You should be able to see the effect in the browser *without*
-  reloading anything. In fact, if you reload in the browser all
-  your prior evaluations will be gone.
-
-
-### To produce something to publish
-
-`lein with-profile prod do clean, resource, cljsbuild once` or execute `./produce.sh`.
-
-You'll find the build results in target/public.
-
-### To use cljsbuild auto and develop without REPL connection
-
-`lein with-profile dev do resource, cljsbuild auto` or execute `./auto.sh`.
-
-You'll find the build results in dev-resources/public.
-
-
-## My ideas and decisions so far
-
+## Motivation
 
 I prefer a strict separation between presentation logic and markup
 (the view). The Om examples I'm aware of tend to mix both aspects
@@ -150,10 +114,21 @@ This is how I like to build boring UIs:
    :rules addressbook-rules})
 ```
 
+As you can see there is no almost no access to technical APIs left, I
+replaced direct HTML building in favor of a internal DSL which is
+certainly suited only for certain style of UIs. It's likely that a
+concrete project will have to invent it's own DSL, and it may borrow
+ideas from this prototype. The advantage adding an additional level is
+that it becomes almost trivial to create and understand a UI like
+this.  However, I currently don't a proof that I can maintain this
+simplistic style for all cases.
+
+
+## Open questions
 
 Here are some points that I have to make up my mind about:
 
-Which rules determine the process+channel topology?
+Are there any general rules that determine the process+channel topology?
 
 By using render functions I come to ask myself if everything needs
 to be a React component. Is just the uniformity beneficial enough?
@@ -163,6 +138,8 @@ focus to, could be part of an action or, more general, in an
 event-handler. React basically supports this:
 http://facebook.github.io/react/docs/working-with-the-browser.html
 
+
+## My ideas and decisions so far
 
 Here are my decisions that explain why the code looks the way it
 does:
@@ -205,13 +182,48 @@ process would use type :action, which, in turn, triggers the execution
 of an arbitrary action function.
 
 
-## TODO
+## TODOs
 * Validation
 * Formatting / parsing of values
 * Async invocation of services
 * Inter-component communication
 * Controlling input focus
 
+
+
+## Usage
+
+Clone this repo. Make sure you're on Java 1.7 or higher.
+
+### To enter interactive development
+
+* Create a REPL session.
+* `(run)` starts an embedded Jetty web server.
+* `(browser-repl)` starts a browser based ClojureScript REPL.
+* Use the URL displayed by browser-repl and connect with the browser
+  to it.
+* In a different tab in the same browser instance use
+  http://localhost:3000 to request index.html.
+* Open a cljs source file. Re-evaluate some code. If you changed data,
+  not just functions, then you also have to re-evaluate the `om/root`
+  expression (I wrapped it in a function, so `(refresh)` does the
+  trick if you changed the views layout).
+* You should be able to see the effect in the browser *without*
+  reloading anything. In fact, if you reload in the browser all
+  your prior evaluations will be gone.
+
+
+### To produce something to publish
+
+`lein with-profile prod do clean, resource, cljsbuild once` or execute `./produce.sh`.
+
+You'll find the build results in target/public.
+
+### To use cljsbuild auto and develop without REPL connection
+
+`lein with-profile dev do resource, cljsbuild auto` or execute `./auto.sh`.
+
+You'll find the build results in dev-resources/public.
 
 
 ## License
