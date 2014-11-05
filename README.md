@@ -22,14 +22,23 @@ need a place. I prefer to implement these using ordinary language
 features like atoms and pure functions, perhaps augmented with access
 to channels, if necessary.
 
-This is how I like boring UIs to look alike:
+This is how I like the code for boring UIs to look alike:
 
 ```clojure
-;; Component channels
+;; Component channel
 ;; ----------------------------------------------------------------------------
 
 (def addressbook-ch (chan))
 
+
+;; Remote access
+;; ----------------------------------------------------------------------------
+
+(defn load-addresses
+  []
+  (GET "/addresses" {:handler #(put! addressbook-ch {:type :action
+                                                     :id "addresses"
+                                                     :payload %})}))
 
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
@@ -70,6 +79,18 @@ This is how I like boring UIs to look alike:
   (remove-selected state [:addresses]))
 
 
+(defn reload-addresses
+  [state event]
+  (load-addresses)
+  state)
+
+
+(defn replace-addresses
+  [state {:keys [payload]}]
+  (-> state
+      (assoc-in [:addresses :items] payload)))
+
+
 ;; ----------------------------------------------------------------------------
 ;; Rules are represented by a sole function [state -> state]
 
@@ -77,7 +98,8 @@ This is how I like boring UIs to look alike:
 (defn addressbook-rules
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)
-        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?)) ; TODO validation
+        ;; TODO real validation
+        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?))
         edit?      (-> state :edit-index)]
     (-> state
         (assoc-in [:details :add :text]     (if edit? "Update"))
@@ -105,12 +127,14 @@ This is how I like boring UIs to look alike:
                                             (column "street")
                                             (column "city")
                                             (column "birthday")])
-                           (button "edit") (button "delete")])
+                           (button "edit") (button "delete") (button "reload")])
    :ch addressbook-ch
-   :actions {:add    add-address
-             :edit   edit-address
-             :delete delete-addresses
-             :reset  reset-address}
+   :actions {:add       add-address
+             :edit      edit-address
+             :delete    delete-addresses
+             :reset     reset-address
+             :reload    reload-addresses
+             :addresses replace-addresses}
    :rules addressbook-rules})
 ```
 

@@ -13,17 +13,14 @@
 (def addressbook-ch (chan))
 
 
-
 ;; Remote access
 ;; ----------------------------------------------------------------------------
 
 (defn load-addresses
   []
   (GET "/addresses" {:handler #(put! addressbook-ch {:type :action
-                                                     :id "new-addresses"
+                                                     :id "addresses"
                                                      :payload %})}))
-
-
 
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
@@ -70,9 +67,8 @@
   state)
 
 
-(defn merge-new-addresses
+(defn replace-addresses
   [state {:keys [payload]}]
-  (prn payload)
   (-> state
       (assoc-in [:addresses :items] payload)))
 
@@ -84,7 +80,8 @@
 (defn addressbook-rules
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)
-        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?)) ; TODO validation
+        ;; TODO real validation
+        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?))
         edit?      (-> state :edit-index)]
     (-> state
         (assoc-in [:details :add :text]     (if edit? "Update"))
@@ -114,11 +111,11 @@
                                             (column "birthday")])
                            (button "edit") (button "delete") (button "reload")])
    :ch addressbook-ch
-   :actions {:add    add-address
-             :edit   edit-address
-             :delete delete-addresses
-             :reset  reset-address
-             :reload reload-addresses
-             :new-addresses merge-new-addresses}
+   :actions {:add       add-address
+             :edit      edit-address
+             :delete    delete-addresses
+             :reset     reset-address
+             :reload    reload-addresses
+             :addresses replace-addresses}
    :rules addressbook-rules})
 
