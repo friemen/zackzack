@@ -4,7 +4,7 @@ A prototype for a ClojureScript/Om/core.async based in-browser UI.
 
 This is work in progress. I just started with Om (beginning of Nov'14).
 
-A running demo is hosted [here](http://www.falkoriemenschneider.de/zackzack/)
+A running demo is hosted [here](http://www.falkoriemenschneider.de/zackzack/).
 
 
 ## Usage
@@ -29,14 +29,17 @@ Clone this repo. Make sure you're on Java 1.7 or higher.
   your prior evaluations will be gone.
 
 
-### To produce a target/public dir in order to publish something
+### To produce something to publish
 
 `lein with-profile prod do clean, resource, cljsbuild once` or execute `./produce.sh`.
 
+You'll find the build results in target/public.
 
 ### To use cljsbuild auto and develop without REPL connection
 
-`lein with-profile dev do resource, cljsbuild auto` or execute `./dev.sh`.
+`lein with-profile dev do resource, cljsbuild auto` or execute `./auto.sh`.
+
+You'll find the build results in dev-resources/public.
 
 
 ## My ideas and decisions so far
