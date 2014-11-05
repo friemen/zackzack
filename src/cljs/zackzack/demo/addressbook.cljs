@@ -72,11 +72,8 @@
 
 
 (def addressbook-view
-  {:view (panel "addressbook"
-                :path nil
-                :title "Addressbook"
+  {:spec (panel "addressbook"
                 :elements [(panel "details"
-                                  :title "Details"
                                   :elements [(textfield "name" :label "Full name")
                                              (textfield "street")
                                              (selectbox "city")

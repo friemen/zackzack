@@ -2,7 +2,9 @@
   "Misc utilities")
 
 
-(def log (.-log js/console))
+(defn log [& xs]
+  (.log js/console (apply pr-str xs)))
+
 (enable-console-print!)
 
 

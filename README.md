@@ -128,11 +128,8 @@ This is how I like to build boring UIs:
 
 
 (def addressbook-view
-  {:view (panel "addressbook"
-                :path nil
-                :title "Addressbook"
+  {:spec (panel "addressbook"
                 :elements [(panel "details"
-                                  :title "Details"
                                   :elements [(textfield "name" :label "Full name")
                                              (textfield "street")
                                              (selectbox "city")
@@ -172,9 +169,8 @@ does:
 
 State is kept in a global atom, according to Om's pgm model.
 
-There is a generic form component that starts a generic CSP-style
-controller process and renders a model describing the components
-UI.
+There is a generic view component that starts a generic CSP-style
+controller process and renders a view according to the UI specification.
 
 Rendering as well as the controller process is in general separated
 from the Om component definition.

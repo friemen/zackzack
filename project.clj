@@ -44,8 +44,9 @@
                                :compiler
                                {:output-to "dev-resources/public/js/zackzack.js"
                                 :output-dir "dev-resources/public/js"
-                                :source-map "dev-resources/public/js/zackzack.js.map"
-                                :pretty-print true}}}
+                                #_:source-map #_"dev-resources/public/js/zackzack.js.map"
+                                :optimizations :none
+                                :pretty-print false}}}
                      :test-commands {"phantomjs"
                                      ["phantomjs" :runner "dev-resources/public/js/zackzack.js"]}}}
 
