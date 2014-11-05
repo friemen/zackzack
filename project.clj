@@ -10,10 +10,17 @@
   :test-paths ["test/clj" "test/cljs"]
   
   :dependencies [[org.clojure/clojure "1.6.0"]
+                 ;; cljs deps
                  [org.clojure/clojurescript "0.0-2311"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
-                 [om "0.7.1"]]
+                 [om "0.7.1"]
+                 [cljs-ajax "0.3.3"]
+                 ;; clj deps
+                 [ring "1.3.1"]
+                 [http-kit "2.1.19"]
+                 [compojure "1.2.1"]]
 
+  
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
             [lein-pprint "1.1.1"]
             [lein-resource "14.10.1"]]

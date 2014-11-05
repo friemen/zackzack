@@ -19,6 +19,7 @@
       state)))
 
 
+
 (def frame-view
   {:spec (frame "frame"
                 :path nil

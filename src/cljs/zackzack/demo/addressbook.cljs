@@ -1,14 +1,28 @@
 (ns zackzack.demo.addressbook
   (:require [cljs.core.async :refer [put! chan]]
+            [ajax.core :refer [GET POST]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.elements :refer [button column datepicker panel
                                        selectbox table textfield]]))
+
 
 
 ;; Component channels
 ;; ----------------------------------------------------------------------------
 
 (def addressbook-ch (chan))
+
+
+
+;; Remote access
+;; ----------------------------------------------------------------------------
+
+(defn load-addresses
+  []
+  (GET "/addresses" {:handler #(put! addressbook-ch {:type :action
+                                                     :id "new-addresses"
+                                                     :payload %})}))
+
 
 
 ;; ----------------------------------------------------------------------------
@@ -50,6 +64,17 @@
   (remove-selected state [:addresses]))
 
 
+(defn reload-addresses
+  [state event]
+  (load-addresses)
+  state)
+
+
+(defn merge-new-addresses
+  [state {:keys [payload]}]
+  (prn payload)
+  state)
+
 ;; ----------------------------------------------------------------------------
 ;; Rules are represented by a sole function [state -> state]
 
@@ -85,11 +110,13 @@
                                             (column "street")
                                             (column "city")
                                             (column "birthday")])
-                           (button "edit") (button "delete")])
+                           (button "edit") (button "delete") #_(button "reload")])
    :ch addressbook-ch
    :actions {:add    add-address
              :edit   edit-address
              :delete delete-addresses
-             :reset  reset-address}
+             :reset  reset-address
+             :reload reload-addresses
+             :new-addresses merge-new-addresses}
    :rules addressbook-rules})
 

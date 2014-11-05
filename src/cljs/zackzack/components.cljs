@@ -84,7 +84,9 @@
                  (for [l links]
                    (render l ch (:links state))))
            (if active
-             (om/build view-component state {:opts {:model (:view-model active)}})
+             (om/build view-component
+                       state
+                       {:opts {:model (om/value (:view-model active))}})
              (dom/span nil "No active view."))))
 
 
@@ -139,7 +141,6 @@
 
 (defn render-togglelink
   [{:keys [id text] :as element} ch {:keys [active disabled] :as state}]
-  (prn state)
   (cond
    disabled
    (dom/span #js {:id id
@@ -184,15 +185,17 @@
 
 
 (defn controller
-  [state {:keys [actions ch rules] :or {rules identity}}]
+  [state {:keys [spec actions ch rules] :or {rules identity}}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
-      (log type id)
+      (log (:id spec) type id)
       (case type
         :init
         (om/transact! state rules)
         :update 
-        (let [path (-> event :state om/path)]
+        (let [path (->> event :state om/path (drop (-> spec :path count)) vec)]
+          ;; TODO the way the path is calculated is incorrect, this is only a hack
+          #_(prn path)
           (om/transact! state #(let [{:keys [state key value parser] :or {parser identity}} event
                                      parsed-value (parser value)]
                                  (-> %
@@ -201,9 +204,10 @@
                                      (rules)))))
         :action
         (when-let [action (get actions (keyword id))]
-          (om/transact! state #(-> %
-                                   (action event)
-                                   (rules)))))
+          (om/transact! state
+                        #(-> %
+                             (action event)
+                             (rules)))))
       (recur))))
 
 
@@ -213,7 +217,7 @@
     (reify
       om/IWillMount
       (will-mount [_]
-        (controller state model))
+        (controller (get-in state (-> spec :path)) model))
       om/IDidMount
       (did-mount [_]
         (put! ch {:type :init :id (:id spec)}))
