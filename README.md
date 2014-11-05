@@ -116,7 +116,7 @@ This is how I like to build boring UIs:
 
 As you can see there is almost no access to technical APIs left, I
 replaced direct HTML building in favor of a internal DSL which is as
-such certainly suited only for certain style of UIs. It's likely that
+such certainly suited only for specific style of UIs. It's likely that
 a concrete project will have to invent it's own DSL, but it may borrow
 ideas from this prototype. The advantage of an additional layer is
 that it becomes almost trivial to create and understand a UI like
@@ -132,7 +132,7 @@ Here are some points that I have to make up my mind about:
 Are there any general rules that determine the process+channel topology?
 
 By using render functions I come to ask myself if everything needs
-to be a React component. Is just the uniformity beneficial enough?
+to be a React component. Or is the uniformity alone beneficial enough?
 
 How can input focus be controlled?  The decision, where to take the
 focus to, could be part of an action or, more general, in an
@@ -165,11 +165,11 @@ stored in the fields map (not yet implemented).
 
 Actions (the stuff that happens for example upon button clicks) are
 triggered by :action events and should ideally be pure functions of
-the form [state event -> state]. If they communicate with a server
-or another component they would either use their own or a foreign
+the form [state event -> state]. If they communicate with a server or
+another component they would either use their own or a foreign
 components channel, respectively.  In case of accessing channels
-action functions are no longer pure, so should be named with a !
-suffix.
+action functions are no longer pure, so should be named with a
+trailing !.
 
 After processing of an :update or :action event a rules function
 [state -> state] is called that ensures that invariants are
@@ -184,12 +184,11 @@ of an arbitrary action function.
 
 
 ## TODOs
-* Validation
-* Formatting / parsing of values
 * Async invocation of services
 * Inter-component communication
+* Validation
+* Formatting / parsing of values
 * Controlling input focus
-
 
 
 ## Usage
