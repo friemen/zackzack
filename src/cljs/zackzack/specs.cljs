@@ -10,6 +10,12 @@
    :path path})
 
 
+(defn bar
+  [id & {:keys [path links] :or {path [(keyword id)]}}]
+  (assoc (spec ::bar id path)
+    :links links))
+
+
 (defn button
   [id & {:keys [path text] :or {path [(keyword id)]
                                 text (str/capitalize id)}}]
@@ -35,13 +41,6 @@
                                  label (str/capitalize id)}}]
   (assoc (spec ::datepicker id path)
     :label label))
-
-
-(defn frame
-  [id & {:keys [path links view-factory] :or {path [(keyword id)]}}]
-  (assoc (spec ::frame id path)
-    :links links
-    :view-factory view-factory))
 
 
 (defn togglelink
@@ -81,3 +80,12 @@
     :label label))
 
 
+(defn view
+  [id & {:keys [path spec-fn rules actions ch] :or {path [(keyword id)]
+                                                    spec-fn (constantly [])
+                                                    rules identity}}]
+  (assoc (spec ::view id path)
+    :spec-fn spec-fn
+    :rules rules
+    :actions actions
+    :ch ch))

@@ -61,6 +61,15 @@
 (declare build)
 
 
+(defn bar
+  [{:keys [active] :as state} _ {{:keys [links]} :spec ch :ch}]
+  (om/component
+   (dom/div nil
+            (wrap dom/div #js {:className "def-header"}
+                  (for [l links]
+                    (build l ch (:links state)))))))
+
+
 (defn button
   [{:keys [disabled] :as state} _ {{:keys [id text] :as spec} :spec ch :ch}]
   (om/component
@@ -115,23 +124,8 @@
                               :onChange update-fn})))))))
 
 
-(defn frame
-  [{:keys [active] :as state} _ {{:keys [links view-factory]} :spec ch :ch}]
-  (om/component
-   (dom/div nil
-            (wrap dom/div #js {:className "def-header"}
-                  (for [l links]
-                    (build l ch (:links state))))
-            (if view-factory
-              (om/build view
-                        state
-                        {:opts {:view-factory view-factory}})
-              (dom/span nil "No active view.")))))
-
-
 (defn panel
   [{:keys [title] :as state} _ {{:keys [title elements] :or {title title}} :spec ch :ch}]
-  (prn "panel")
   (om/component
    (wrap dom/div #js {:className "def-panel"}
          (cons (dom/h1 #js {:className "def-paneltitle"} title)
@@ -232,10 +226,10 @@
 
 
 (defn controller
-  [state id {:keys [actions ch rules] :or {rules identity}}]
+  [state view-id {:keys [actions ch rules] :or {rules identity}}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
-      (log id type id)
+      (log view-id type id)
       (case type
         :init
         (om/transact! state rules)
@@ -258,20 +252,23 @@
 
 
 (defn view
-  [state owner {:keys [view-factory]}]
-  (let [view (view-factory)
-        {:keys [spec-fn ch]} view
-        {:keys [path id]} (spec-fn state)]
+  [state owner {:keys [spec view-factory]}]
+  (let [view (or spec (view-factory))
+        {:keys [spec-fn ch id path]} view]
     (reify
       om/IWillMount
       (will-mount [_]
-        (controller (get-in state path) id view))
+        (controller state id view))
       om/IDidMount
       (did-mount [_]
         (put! ch {:type :init :id id}))
       om/IRender
       (render [_]
-        (build (spec-fn state) ch state)))))
+        (dom/div nil (build (sp/panel id
+                                      :path nil
+                                      :title nil
+                                      :elements (spec-fn state))
+                            ch state))))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -279,15 +276,18 @@
 
 (defn build
   [spec ch state]
-  (let [f (case (:type spec)
-            ::sp/button     button
-            ::sp/checkbox   checkbox
-            ::sp/datepicker datepicker
-            ::sp/frame      frame
-            ::sp/panel      panel
-            ::sp/selectbox  selectbox
-            ::sp/table      table
-            ::sp/togglelink togglelink
-            ::sp/textfield  textfield)]
-    (om/build f (get-in state (:path spec)) {:opts {:spec spec :ch ch}})))
+  (when spec
+    (let [f (case (:type spec)
+              ::sp/bar        bar
+              ::sp/button     button
+              ::sp/checkbox   checkbox
+              ::sp/datepicker datepicker
+              ::sp/panel      panel
+              ::sp/selectbox  selectbox
+              ::sp/table      table
+              ::sp/togglelink togglelink
+              ::sp/textfield  textfield
+              ::sp/view       view)]
+      #_(prn "build" (:type spec) (and state (om/path state)) (:path spec))
+      (om/build f (get-in state (:path spec)) {:opts {:spec spec :ch ch}}))))
 
