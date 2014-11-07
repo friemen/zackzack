@@ -1,6 +1,6 @@
 (ns zackzack.demo.frame
   (:require [cljs.core.async :refer [put! chan]]
-            [zackzack.elements :refer [frame togglelink]]
+            [zackzack.specs :refer [frame togglelink]]
             [zackzack.demo.addressbook :refer [addressbook-view]]))
 
 
@@ -21,7 +21,7 @@
 
 (defn frame-view
   []
-  {:spec
+  {:spec-fn
    (fn [state]
      (frame "frame"
             :path nil

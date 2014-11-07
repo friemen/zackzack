@@ -1,10 +1,11 @@
 (ns zackzack.components
+  "Om components"
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
             [zackzack.utils :refer [log]]
-            [zackzack.elements :as el]))
+            [zackzack.specs :as sp]))
 
 
 
@@ -32,9 +33,9 @@
 
 
 (defn- warn-if-state-missing
-  [element state]
+  [spec state]
   (when-not state
-    (log (str "No state defined for path " (:path element)))))
+    (log (str "No state defined for path " (:path spec)))))
 
 
 (defn- update!
@@ -47,143 +48,175 @@
 
 
 (defn- action!
-  [ch id element evt]
+  [ch id spec evt]
   (put! ch {:type :action
             :id id
-            :element element}))
+            :spec spec}))
 
 
 ;; ----------------------------------------------------------------------------
-;; HTML rendering functions
+;; Components without own controller
 
-(declare view-component)
-(declare render)
-
-
-(defn render-button
-  [{:keys [id text] :as element} ch {:keys [disabled] :as state}]
-  (dom/input #js {:id id
-                  :className "def-button"
-                  :type "button"
-                  :value (or (:text state) text)
-                  :disabled disabled
-                  :onClick (partial action! ch id element)}))
+(declare view)
+(declare build)
 
 
-(defn render-checkbox
-  [{:keys [id label] :as element} ch {:keys [disabled value] :as state}]
-  (with-label label nil
-    (dom/input #js {:id id
-                    :className "def-checkbox"
-                    :type "checkbox"
-                    :disabled disabled
-                    :checked value
-                    :onChange #(put! ch {:type :update
-                                         :id id
-                                         :state state
-                                         :key :value
-                                         :value (-> % .-target .-checked)})})))
+(defn button
+  [{:keys [disabled] :as state} _ {{:keys [id text] :as spec} :spec ch :ch}]
+  (om/component
+   (dom/input #js {:id id
+                   :className "def-button"
+                   :type "button"
+                   :value (or (:text state) text)
+                   :disabled disabled
+                   :onClick (partial action! ch id spec)})))
 
 
-(defn render-component
-  [component-fn element ch state]
-  (om/build component-fn state {:opts {:model element :ch ch}}))
+(defn checkbox
+  [{:keys [disabled value] :as state} _ {{:keys [id label]} :spec ch :ch}]
+  (om/component
+   (with-label label nil
+     (dom/input #js {:id id
+                     :className "def-checkbox"
+                     :type "checkbox"
+                     :disabled disabled
+                     :checked value
+                     :onChange #(put! ch {:type :update
+                                          :id id
+                                          :state state
+                                          :key :value
+                                          :value (-> % .-target .-checked)})}))))
 
 
-(defn render-frame
-  [{:keys [links view-factory]} ch {:keys [active] :as state}]
-  (dom/div nil
-           (wrap dom/div #js {:className "def-header"}
-                 (for [l links]
-                   (render l ch (:links state))))
-           (if view-factory
-             (om/build view-component
-                       state
-                       {:opts {:view-factory view-factory}})
-             (dom/span nil "No active view."))))
+(defn datepicker
+  [state owner {:keys [spec ch]}]
+  (let [update-fn (partial update! ch (:id spec) state)]
+    (reify
+      om/IInitState
+      (init-state [_]
+        {:ch ch})
+      om/IDidMount
+      (did-mount [_]
+        (let [input (om.core/get-node owner (-> spec :id name))]
+          (js/Pikaday. #js {:field input
+                            :format "DD.MM.YYYY"})))
+      om/IRenderState
+      (render-state [_ {:keys [ch]}]
+        (let [{:keys [message disabled value]} state
+              {:keys [label id]} spec]
+            (with-label label message
+              (dom/input #js {:className "def-field"
+                              :type "text"
+                              :value (or value "")
+                              :disabled disabled
+                              :id id
+                              :ref (name id)
+                              :onBlur update-fn
+                              :onChange update-fn})))))))
 
 
-(defn render-panel
-  [{:keys [title elements]} ch {:keys [title] :or {title title} :as state}]
-  (wrap dom/div #js {:className "def-panel"}
-        (cons (dom/h1 #js {:className "def-paneltitle"} title)
-              (for [e elements]
-                (render e ch state)))))
+(defn frame
+  [{:keys [active] :as state} _ {{:keys [links view-factory]} :spec ch :ch}]
+  (om/component
+   (dom/div nil
+            (wrap dom/div #js {:className "def-header"}
+                  (for [l links]
+                    (build l ch (:links state))))
+            (if view-factory
+              (om/build view
+                        state
+                        {:opts {:view-factory view-factory}})
+              (dom/span nil "No active view.")))))
+
+
+(defn panel
+  [{:keys [title] :as state} _ {{:keys [title elements] :or {title title}} :spec ch :ch}]
+  (prn "panel")
+  (om/component
+   (wrap dom/div #js {:className "def-panel"}
+         (cons (dom/h1 #js {:className "def-paneltitle"} title)
+               (for [e elements]
+                 (build e ch state))))))
 
 
 
-(defn render-selectbox
-  [{:keys [id label] :as element} ch {:keys [value message items] :as state}]
-  (warn-if-state-missing element state)
-  (with-label label message
-    (wrap dom/select #js {:id id
-                          :className "def-field"
-                          :value (or value "")
-                          :ref (name id)
-                          :onChange (partial update! ch id state)}
-          (for [i items]
-            (dom/option (clj->js i) (:value i))))))
+(defn selectbox
+  [{:keys [value message items] :as state} _ {{:keys [id label] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec state)
+  (om/component
+   (with-label label message
+     (wrap dom/select #js {:id id
+                           :className "def-field"
+                           :value (or value "")
+                           :ref (name id)
+                           :onChange (partial update! ch id state)}
+           (for [i items]
+             (dom/option (clj->js i) (:value i)))))))
 
 
-(defn render-table
-  [{:keys [id label columns] :as element} ch {:keys [items visible selection] :as state}]
-  (warn-if-state-missing element state)
-  (letfn [(render-row [index item selected?]
-            (wrap dom/tr #js {:className (and selected? "selected")
-                              :onClick #(put! ch {:type :update
-                                                  :id id
-                                                  :state state
-                                                  :key :selection
-                                                  :value #{index}})}
-                  (for [c columns]
-                    (dom/td nil ((:getter c) item)))))]
-    (cond
-     (not visible)  (dom/div nil)
-     (empty? items) (with-label label (dom/p nil "No items to display."))  
-     :else          (if (seq items)
-                      (with-label label 
-                        (dom/table #js {:className "def-table"}
-                                   (dom/thead nil
-                                              (wrap dom/tr
-                                                    (for [c columns]
-                                                      (dom/th nil (:title c)))))
-                                   (wrap dom/tbody
-                                         (for [[i item] (map vector (range) items)]
-                                           (render-row i item (get selection i))))))))))
+(defn table
+  [{:keys [items visible selection] :as state} _ {{:keys [id label columns] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec state)
+  (om/component
+   (letfn [(render-row [index item selected?]
+             (wrap dom/tr #js {:className (and selected? "selected")
+                               :onClick #(put! ch {:type :update
+                                                   :id id
+                                                   :state state
+                                                   :key :selection
+                                                   :value #{index}})}
+                   (for [c columns]
+                     (dom/td nil ((:getter c) item)))))]
+     (cond
+      (not visible)  (dom/div nil)
+      (empty? items) (with-label label (dom/p nil "No items to display."))  
+      :else          (if (seq items)
+                       (with-label label 
+                         (dom/table #js {:className "def-table"}
+                                    (dom/thead nil
+                                               (wrap dom/tr
+                                                     (for [c columns]
+                                                       (dom/th nil (:title c)))))
+                                    (wrap dom/tbody
+                                          (for [[i item] (map vector (range) items)]
+                                            (render-row i item (get selection i)))))))))))
 
 
-(defn render-togglelink
-  [{:keys [id text] :as element} ch {:keys [active disabled] :as state}]
-  (cond
-   disabled
-   (dom/span #js {:id id
-                  :className "def-togglelink-span def-togglelink-span-disabled"} text)
-   active
-   (dom/span #js {:id id
-                  :className "def-togglelink-span def-togglelink-span-active"} text)
-   :else
-   (dom/span #js {:id id
-                  :className "def-togglelink-span"}
-             (dom/a #js {:id id
-                         :className "def-togglelink"
-                         :href "#"
-                         :onClick (partial action! ch id element)}
-                    text))))
+(defn togglelink
+  [{:keys [active disabled] :as state} _ {{:keys [id text] :as spec} :spec ch :ch}]
+  (om/component
+   (cond
+    disabled
+    (dom/span #js {:id id
+                   :className "def-togglelink-span def-togglelink-span-disabled"} text)
+    active
+    (dom/span #js {:id id
+                   :className "def-togglelink-span def-togglelink-span-active"} text)
+    :else
+    (dom/span #js {:id id
+                   :className "def-togglelink-span"}
+              (dom/a #js {:id id
+                          :className "def-togglelink"
+                          :href "#"
+                          :onClick (partial action! ch id spec)}
+                     text)))))
 
 
-(defn render-textfield
-  [{:keys [id label] :as element} ch {:keys [value message disabled] :as state}]
-  (warn-if-state-missing element state)
+(defn textfield
+  [{:keys [value message disabled] :as state} _ {{:keys [id label] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec state)
   (let [update-fn (partial update! ch id state)]
-    (with-label label message
-      (dom/input #js {:className "def-field"
-                      :type "text"
-                      :value (or value "")
-                      :disabled disabled
-                      :id id
-                      :ref (name id)
-                      :onBlur update-fn
-                      :onChange update-fn}))))
+    (om/component
+     (with-label label message
+       (dom/input #js {:className "def-field"
+                       :type "text"
+                       :value (or value "")
+                       :disabled disabled
+                       :id id
+                       :ref (name id)
+                       :onBlur update-fn
+                       :onChange update-fn})))))
+
 
 
 ;; ----------------------------------------------------------------------------
@@ -224,56 +257,37 @@
       (recur))))
 
 
-(defn view-component
+(defn view
   [state owner {:keys [view-factory]}]
-  (let [model (view-factory)
-        {:keys [spec ch]} model
-        {:keys [path id]} (spec state)]
+  (let [view (view-factory)
+        {:keys [spec-fn ch]} view
+        {:keys [path id]} (spec-fn state)]
     (reify
       om/IWillMount
       (will-mount [_]
-        (controller (get-in state path) id model))
+        (controller (get-in state path) id view))
       om/IDidMount
       (did-mount [_]
         (put! ch {:type :init :id id}))
       om/IRender
       (render [_]
-        (render (spec state) ch state)))))
+        (build (spec-fn state) ch state)))))
 
 
 ;; ----------------------------------------------------------------------------
-;; Other components
+;; Generic builder
 
-(defn datepicker-component
-  [state owner {:keys [model ch]}]
-  (reify
-    om/IInitState
-    (init-state [_]
-      {:ch ch})
-    om/IDidMount
-    (did-mount [_]
-      (let [input (om.core/get-node owner (-> model :id name))]
-        (js/Pikaday. #js {:field input
-                          :format "DD.MM.YYYY"})))
-    om/IRenderState
-    (render-state [_ {:keys [ch]}]
-      (render-textfield model ch state))))
-
-
-;; ----------------------------------------------------------------------------
-;; Generic renderer
-
-(defn render
-  [element ch state]
-  (let [f (case (:type element)
-            ::el/button render-button
-            ::el/checkbox render-checkbox
-            ::el/datepicker (partial render-component datepicker-component)
-            ::el/frame render-frame
-            ::el/panel render-panel
-            ::el/selectbox render-selectbox
-            ::el/table render-table
-            ::el/togglelink render-togglelink
-            ::el/textfield render-textfield)]
-    (f element ch (get-in state (:path element)))))
+(defn build
+  [spec ch state]
+  (let [f (case (:type spec)
+            ::sp/button     button
+            ::sp/checkbox   checkbox
+            ::sp/datepicker datepicker
+            ::sp/frame      frame
+            ::sp/panel      panel
+            ::sp/selectbox  selectbox
+            ::sp/table      table
+            ::sp/togglelink togglelink
+            ::sp/textfield  textfield)]
+    (om/build f (get-in state (:path spec)) {:opts {:spec spec :ch ch}})))
 

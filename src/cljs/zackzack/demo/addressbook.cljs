@@ -2,12 +2,12 @@
   (:require [cljs.core.async :refer [put! chan]]
             [ajax.core :refer [GET POST]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
-            [zackzack.elements :refer [button checkbox column datepicker panel
-                                       selectbox table textfield]]))
+            [zackzack.specs :refer [button checkbox column datepicker panel
+                                    selectbox table textfield]]))
 
 
 
-;; Component channel
+;; View channel
 ;; ----------------------------------------------------------------------------
 
 (def addressbook-ch (chan))
@@ -103,7 +103,7 @@
 
 (defn addressbook-view
   [state]
-  {:spec
+  {:spec-fn
    (fn [state]
      (panel "addressbook"
             :elements [(panel "details"

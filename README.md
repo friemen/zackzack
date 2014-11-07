@@ -14,7 +14,7 @@ I prefer a strict separation between presentation logic and markup
 a bit, however, IMO using channels as proposed by @swannodette is
 the key to strong decoupling.
 
-I'm interested in boring enterprise style forms-over-data UIs.  I like
+I'm interested in boring enterprise style forms-over-data UIs. I like
 to succinctly specify the content of views without mixing up the
 specification with presentation logic. However, things like state,
 actions, validation, rules, inter-component and remote communication
@@ -22,10 +22,12 @@ need a place. I prefer to implement these using ordinary language
 features like atoms and pure functions, perhaps augmented with access
 to channels, if necessary.
 
-This is how I like the code for boring UIs to look alike:
+My hope is to show that the combination of Om and core.async enables
+drastically simpler UI development. This is how I like the code for
+boring UIs to look alike:
 
 ```clojure
-;; Component channel
+;; View channel
 ;; ----------------------------------------------------------------------------
 
 (def addressbook-ch (chan))
@@ -43,7 +45,7 @@ This is how I like the code for boring UIs to look alike:
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
 
-(def fields [:name :company :street :city :birthday :private])
+(def fields [:private :name :company :street :city :birthday])
 
 (defn add-address
   [state event]
@@ -101,8 +103,8 @@ This is how I like the code for boring UIs to look alike:
         ;; TODO use real validation
         invalid?   (->> fields
                         (get-all (:details state) :value)
-                        (vals)
-                        (filter string?)
+                        (filter #(-> % first #{:name :street :city :birthday}))
+                        (map second)
                         (some empty?))
         edit?      (-> state :edit-index)
         private?   (-> state :details :private :value)]
@@ -121,7 +123,7 @@ This is how I like the code for boring UIs to look alike:
 
 (defn addressbook-view
   [state]
-  {:spec
+  {:spec-fn
    (fn [state]
      (panel "addressbook"
             :elements [(panel "details"
@@ -150,14 +152,12 @@ This is how I like the code for boring UIs to look alike:
    :rules addressbook-rules})
 ```
 
-As you can see there is almost no access to technical APIs left, I
-added a thin DSL layer on top of the React DOM API, you may consider
-it a means to parameterize component rendering. However, it's likely that a
-concrete project will have to invent it's own DSL to suit its
-needs. The advantage of a DSL layer is that it becomes almost trivial
-to create and understand a UI like this. However, I currently don't
-have a proof that I can maintain this simplistic style for all cases
-(which is why I started this prototype).
+As you can see that there is almost no access to technical APIs left,
+I added a thin DSL layer on top of the React DOM API, you may consider
+it a means to succinctly parameterize Om components. However, it's
+likely that a concrete project will have to invent it's own DSL to
+suit its needs. The advantage of a DSL layer is that it becomes almost
+trivial to create and understand a UI like this.
 
 
 ## Open questions
@@ -165,9 +165,6 @@ have a proof that I can maintain this simplistic style for all cases
 Here are some points that I have to make up my mind about:
 
 Are there any general rules that determine the process+channel topology?
-
-By using render functions I come to ask myself if everything needs
-to be a React component. Or is the uniformity alone beneficial enough?
 
 How can input focus be controlled?  The decision, where to take the
 focus to, could be part of an action or, more general, in an
@@ -179,23 +176,27 @@ http://facebook.github.io/react/docs/working-with-the-browser.html
 
 State is kept in a global atom, according to Om's pgm model.
 
-There is a generic view component that starts a generic CSP-style
-controller process and renders a view according to the UI specification.
+A *view* bundles the specification on contents, a channel, actions, 
+rules and a validator.
 
-Rendering as well as the controller process is in general separated
-from the Om component reification.
+View contents is specified as data using a bunch of functions that
+create nested maps (see zackzack.specs namespace).
+
+There is a generic *view component* that starts a generic CSP-style
+controller process and builds components by interpretation of the
+spec-fn result.
 
 Each view component has one channel that takes every event
 submitted by JS event listeners. Any user input is routed as
 `:update` event through this channel and the application state is
-updated immediately with the result of a field specific parser
+updated immediately with the result of a field specific *parser*
 function [string -> anything] application.
 
-After processing an `:update`, validation with respect to the updated
+After processing an `:update`, *validation* with respect to the updated
 field is applied (currently not fully implemented). This results in a
 `:message` value stored in the fields map.
 
-Actions (the stuff that happens for example upon button clicks) are
+*Actions* (the stuff that happens for example upon button clicks) are
 triggered by `:action` events and should ideally be pure functions of
 the form [state event -> state]. If they communicate with a server or
 another component they would either use their own or a foreign
@@ -203,17 +204,17 @@ components channel, respectively.  In case of accessing channels
 action functions are no longer pure, so should be named with a
 trailing !.
 
-Remote communication is done asynchronously. Upon receipt of the
+*Remote communication* is done asynchronously. Upon receipt of the
 response the callback puts an `:action` event to the components
 channel, where the content of the response is held as `:payload`
 value. Thus, payload processing takes the same way as action
 processing.
 
-After processing of an `:update` or `:action` event a rules function
+After processing of an `:update` or `:action` event a *rules* function
 [state -> state] is called that ensures that invariants regarding
 the components state are re-established.
 
-To enable communication among controller processes the channels can be
+To enable *communication among controller processes* the channels can be
 defined before the actions. The channels are passed as part of the
 component model to the controller and to render functions. An action
 that wishes to send an event to a different process would use type
@@ -231,7 +232,8 @@ function.
 
 ## Usage
 
-Clone this repo. Make sure you're on Java 1.7 or higher.
+Clone this repo. Make sure you're on Java 1.7 or higher and have at
+least Leiningen 2.5 installed.
 
 ### To enter interactive development
 

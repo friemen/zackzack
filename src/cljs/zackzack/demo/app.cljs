@@ -33,13 +33,21 @@
                                   :birthday {:value ""}}
                         :addresses {:visible true
                                     :selection #{0}
-                                    :items [{:name "Mini" :street "Downstreet" :city "Duckberg" :birthday "01.01.1950"}
-                                            {:name "Donald" :street "Upperstreet" :city "Duckberg" :birthday "01.01.1955"}]}}}))
+                                    :items [{:private true
+                                             :name "Mini"
+                                             :street "Downstreet"
+                                             :city "Duckberg"
+                                             :birthday "01.01.1950"}
+                                            {:private false
+                                             :name "Donald"
+                                             :street "Upperstreet"
+                                             :city "Duckberg"
+                                             :birthday "01.01.1955"}]}}}))
 
 
 (defn refresh
   []
-  (om/root z/view-component
+  (om/root z/view
            state-ref
            {:target (. js/document (getElementById "app"))
             :opts {:view-factory frame-view}}))
