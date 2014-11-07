@@ -120,8 +120,8 @@ boring UIs to look alike:
            (datepicker "birthday")
            (button "add" :text "Add Address") (button "reset")])
         :ch addressdetails-ch
-        :actions {:add       details-add
-                  :edit      details-edit!
+        :actions {:add       details-add!
+                  :edit      details-edit
                   :reset     details-reset}
         :rules addressdetails-rules))
 
@@ -156,7 +156,7 @@ boring UIs to look alike:
   (remove-selected state [:addresses]))
 
 
-(defn addressbook-load
+(defn addressbook-reload
   [state event]
   (load-addresses)
   state)
@@ -204,7 +204,6 @@ boring UIs to look alike:
                   :reload    addressbook-reload
                   :addresses addressbook-replace}
         :rules addressbook-rules))
-
 ```
 
 As you can see there is almost no access to technical APIs left, I
