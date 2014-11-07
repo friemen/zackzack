@@ -22,9 +22,11 @@
                   {:disabled true
                    :active false}}
           :addressbook {:edit-index nil
-                        :details {:name {:value "foo"}
+                        :details {:private {:value true}
+                                  :company  {:value "itemis"}
+                                  :name {:value "foo"}
                                   :street {:value "bar"}
-                                  :city {:value "Cologne"
+                                  :city {:value "Bonn"
                                          :items [{:value nil :name "none"}
                                                  {:value "Bonn" :name "bonn"}
                                                  {:value "Cologne" :name "cologne"}

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-lein with-profile dev do resource, cljsbuild once
+lein with-profile dev do clean, cljsbuild once

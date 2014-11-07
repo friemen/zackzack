@@ -3,8 +3,8 @@
 /lib
 /classes
 /checkouts
-/dev-resources/public/js/*
 /out
+/resources/public/js
 pom.xml
 *.jar
 *.class

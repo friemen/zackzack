@@ -18,6 +18,13 @@
     :text text))
 
 
+(defn checkbox
+  [id & {:keys [path label] :or {path [(keyword id)]
+                                 label (str/capitalize id)}}]
+  (assoc (element z/render-checkbox id path)
+    :label label))
+
+
 (defn column
   [id & {:keys [getter title] :or {title (str/capitalize id)
                                    getter (keyword id)}}]

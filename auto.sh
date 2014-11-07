@@ -1,3 +1,3 @@
 #!/bin/sh
 
-lein with-profile dev do resource, cljsbuild auto
+lein with-profile auto do cljsbuild auto

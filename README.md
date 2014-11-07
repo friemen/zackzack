@@ -43,7 +43,7 @@ This is how I like the code for boring UIs to look alike:
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
 
-(def fields [:name :street :city :birthday])
+(def fields [:name :company :street :city :birthday :private])
 
 (defn add-address
   [state event]
@@ -98,15 +98,21 @@ This is how I like the code for boring UIs to look alike:
 (defn addressbook-rules
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)
-        ;; TODO real validation
-        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?))
-        edit?      (-> state :edit-index)]
+        ;; TODO use real validation
+        invalid?   (->> fields
+                        (get-all (:details state) :value)
+                        (vals)
+                        (filter string?)
+                        (some empty?))
+        edit?      (-> state :edit-index)
+        private?   (-> state :details :private :value)]
     (-> state
-        (assoc-in [:details :add :text]     (if edit? "Update"))
-        (assoc-in [:details :title]         (if edit? "Edit Details" "Details"))
-        (assoc-in [:edit :disabled]         none-sel?)
-        (assoc-in [:delete :disabled]       none-sel?)
-        (assoc-in [:details :add :disabled] (if invalid? true)))))
+        (assoc-in [:details :add :text]         (if edit? "Update"))
+        (assoc-in [:details :title]             (if edit? "Edit Details" "Details"))
+        (assoc-in [:details :company :disabled] private?)
+        (assoc-in [:edit :disabled]             none-sel?)
+        (assoc-in [:delete :disabled]           none-sel?)
+        (assoc-in [:details :add :disabled]     (if invalid? true)))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -116,7 +122,9 @@ This is how I like the code for boring UIs to look alike:
 (def addressbook-view
   {:spec (panel "addressbook"
                 :elements [(panel "details"
-                                  :elements [(textfield "name" :label "Full name")
+                                  :elements [(checkbox "private")
+                                             (textfield "name" :label "Full name")
+                                             (textfield "company")
                                              (textfield "street")
                                              (selectbox "city")
                                              (datepicker "birthday")
@@ -124,6 +132,7 @@ This is how I like the code for boring UIs to look alike:
                            (table "addresses"
                                   :label "Addresses"
                                   :columns [(column "name")
+                                            (column "company")
                                             (column "street")
                                             (column "city")
                                             (column "birthday")])
@@ -241,15 +250,17 @@ Clone this repo. Make sure you're on Java 1.7 or higher.
 
 ### To produce something to publish
 
-`lein with-profile prod do clean, resource, cljsbuild once` or execute `./produce.sh`.
+`lein do clean, jar` or execute `./produce.sh`.
 
-You'll find the build results in target/public.
+You'll find the build results in resources/public.
+Use the index.html to start the frontend.
 
 ### To use cljsbuild auto and develop without REPL connection
 
-`lein with-profile dev do resource, cljsbuild auto` or execute `./auto.sh`.
+`lein with-profile auto do, cljsbuild auto` or execute `./auto.sh`.
 
-You'll find the build results in dev-resources/public.
+You'll find the build results in resources/public.
+Use the testindex.html to start the frontend.
 
 
 ## License

@@ -2,7 +2,7 @@
   (:require [cljs.core.async :refer [put! chan]]
             [ajax.core :refer [GET POST]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
-            [zackzack.elements :refer [button column datepicker panel
+            [zackzack.elements :refer [button checkbox column datepicker panel
                                        selectbox table textfield]]))
 
 
@@ -25,7 +25,7 @@
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
 
-(def fields [:name :street :city :birthday])
+(def fields [:private :name :company :street :city :birthday])
 
 (defn add-address
   [state event]
@@ -80,15 +80,21 @@
 (defn addressbook-rules
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)
-        ;; TODO real validation
-        invalid?   (->> fields (get-all (:details state) :value) (vals) (some empty?))
-        edit?      (-> state :edit-index)]
+        ;; TODO use real validation
+        invalid?   (->> fields
+                        (get-all (:details state) :value)
+                        (filter #(-> % first #{:name :street :city :birthday}))
+                        (map second)
+                        (some empty?))
+        edit?      (-> state :edit-index)
+        private?   (-> state :details :private :value)]
     (-> state
-        (assoc-in [:details :add :text]     (if edit? "Update"))
-        (assoc-in [:details :title]         (if edit? "Edit Details" "Details"))
-        (assoc-in [:edit :disabled]         none-sel?)
-        (assoc-in [:delete :disabled]       none-sel?)
-        (assoc-in [:details :add :disabled] (if invalid? true)))))
+        (assoc-in [:details :add :text]         (if edit? "Update"))
+        (assoc-in [:details :title]             (if edit? "Edit Details" "Details"))
+        (assoc-in [:details :company :disabled] private?)
+        (assoc-in [:edit :disabled]             none-sel?)
+        (assoc-in [:delete :disabled]           none-sel?)
+        (assoc-in [:details :add :disabled]     (if invalid? true)))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -98,7 +104,9 @@
 (def addressbook-view
   {:spec (panel "addressbook"
                 :elements [(panel "details"
-                                  :elements [(textfield "name" :label "Full name")
+                                  :elements [(checkbox "private")
+                                             (textfield "name" :label "Full name")
+                                             (textfield "company")
                                              (textfield "street")
                                              (selectbox "city")
                                              (datepicker "birthday")
@@ -106,6 +114,7 @@
                            (table "addresses"
                                   :label "Addresses"
                                   :columns [(column "name")
+                                            (column "company")
                                             (column "street")
                                             (column "city")
                                             (column "birthday")])

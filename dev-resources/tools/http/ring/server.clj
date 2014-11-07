@@ -11,7 +11,7 @@
 ;;; script tag containing the JS code which activates the bREPL
 ;;; connection.
 (enlive/deftemplate page
-  (io/resource "public/index.html")
+  (io/resource "public/testindex.html")
   []
   [:body] (enlive/append
             (enlive/html [:script (browser-connected-repl-js)])))

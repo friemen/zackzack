@@ -72,6 +72,21 @@
                   :onClick (partial action! ch id element)}))
 
 
+(defn render-checkbox
+  [{:keys [id label] :as element} ch {:keys [disabled value] :as state}]
+  (with-label label nil
+    (dom/input #js {:id id
+                    :className "def-checkbox"
+                    :type "checkbox"
+                    :disabled disabled
+                    :checked value
+                    :onChange #(put! ch {:type :update
+                                         :id id
+                                         :state state
+                                         :key :value
+                                         :value (-> % .-target .-checked)})})))
+
+
 (defn render-component
   [component-fn element ch state]
   (om/build component-fn state {:opts {:model element :ch ch}}))
@@ -159,13 +174,14 @@
 
 
 (defn render-textfield
-  [{:keys [id label] :as element} ch {:keys [value message] :as state}]
+  [{:keys [id label] :as element} ch {:keys [value message disabled] :as state}]
   (warn-if-state-missing element state)
   (let [update-fn (partial update! ch id state)]
     (with-label label message
       (dom/input #js {:className "def-field"
                       :type "text"
                       :value (or value "")
+                      :disabled disabled
                       :id id
                       :ref (name id)
                       :onBlur update-fn
@@ -180,7 +196,8 @@
 (defn validator
   [state path value]
   (let [message-path (conj path :message)
-        validate-fn #(if (empty? %) "Please enter a value.")] ;TODO this is a dummy
+        ;TODO this is a dummy:
+        validate-fn #(if (and (string? %) (empty? %)) "Please enter a value.")]
     (assoc-in state message-path (validate-fn value))))
 
 
