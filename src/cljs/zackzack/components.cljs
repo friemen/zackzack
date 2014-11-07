@@ -3,7 +3,8 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [zackzack.utils :refer [log]]))
+            [zackzack.utils :refer [log]]
+            [zackzack.elements :as el]))
 
 
 
@@ -56,10 +57,7 @@
 ;; HTML rendering functions
 
 (declare view-component)
-
-(defn render
-  [element ch state]
-  ((:renderer element) element ch (get-in state (:path element))))
+(declare render)
 
 
 (defn render-button
@@ -93,15 +91,15 @@
 
 
 (defn render-frame
-  [{:keys [links]} ch {:keys [active] :as state}]
+  [{:keys [links view-factory]} ch {:keys [active] :as state}]
   (dom/div nil
            (wrap dom/div #js {:className "def-header"}
                  (for [l links]
                    (render l ch (:links state))))
-           (if active
+           (if view-factory
              (om/build view-component
                        state
-                       {:opts {:model (om/value (:view-model active))}})
+                       {:opts {:view-factory view-factory}})
              (dom/span nil "No active view."))))
 
 
@@ -188,9 +186,8 @@
                       :onChange update-fn}))))
 
 
-
 ;; ----------------------------------------------------------------------------
-;; A generic controller and component for forms
+;; A generic controller and component for views
 
 
 (defn validator
@@ -202,10 +199,10 @@
 
 
 (defn controller
-  [state {:keys [spec actions ch rules] :or {rules identity}}]
+  [state id {:keys [actions ch rules] :or {rules identity}}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
-      (log (:id spec) type id)
+      (log id type id)
       (case type
         :init
         (om/transact! state rules)
@@ -228,18 +225,20 @@
 
 
 (defn view-component
-  [state owner {:keys [model]}]
-  (let [{:keys [spec ch]} model]
+  [state owner {:keys [view-factory]}]
+  (let [model (view-factory)
+        {:keys [spec ch]} model
+        {:keys [path id]} (spec state)]
     (reify
       om/IWillMount
       (will-mount [_]
-        (controller (get-in state (-> spec :path)) model))
+        (controller (get-in state path) id model))
       om/IDidMount
       (did-mount [_]
-        (put! ch {:type :init :id (:id spec)}))
+        (put! ch {:type :init :id id}))
       om/IRender
       (render [_]
-        (render spec ch state)))))
+        (render (spec state) ch state)))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -261,4 +260,20 @@
       (render-textfield model ch state))))
 
 
+;; ----------------------------------------------------------------------------
+;; Generic renderer
+
+(defn render
+  [element ch state]
+  (let [f (case (:type element)
+            ::el/button render-button
+            ::el/checkbox render-checkbox
+            ::el/datepicker (partial render-component datepicker-component)
+            ::el/frame render-frame
+            ::el/panel render-panel
+            ::el/selectbox render-selectbox
+            ::el/table render-table
+            ::el/togglelink render-togglelink
+            ::el/textfield render-textfield)]
+    (f element ch (get-in state (:path element)))))
 

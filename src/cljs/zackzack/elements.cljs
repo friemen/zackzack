@@ -1,12 +1,11 @@
 (ns zackzack.elements
   "Factory functions used to form a model"
-  (:require [zackzack.components :as z]
-            [clojure.string :as str]))
+  (:require [clojure.string :as str]))
 
 
 (defn- element
-  [renderer-fn id path]
-  {:renderer renderer-fn
+  [type id path]
+  {:type type
    :id id
    :path path})
 
@@ -14,48 +13,48 @@
 (defn button
   [id & {:keys [path text] :or {path [(keyword id)]
                                 text (str/capitalize id)}}]
-  (assoc (element z/render-button id path)
+  (assoc (element ::button id path)
     :text text))
 
 
 (defn checkbox
   [id & {:keys [path label] :or {path [(keyword id)]
                                  label (str/capitalize id)}}]
-  (assoc (element z/render-checkbox id path)
+  (assoc (element ::checkbox id path)
     :label label))
 
 
 (defn column
   [id & {:keys [getter title] :or {title (str/capitalize id)
                                    getter (keyword id)}}]
-  {:id id :getter getter :title title})
+  {:type ::column :id id :getter getter :title title})
 
 
 (defn datepicker
   [id & {:keys [path label] :or {path [(keyword id)]
                                  label (str/capitalize id)}}]
-  (assoc (element (partial z/render-component z/datepicker-component)
-                  id path)
+  (assoc (element ::datepicker id path)
     :label label))
 
 
 (defn frame
-  [id & {:keys [path links] :or {path [(keyword id)]}}]
-  (assoc (element z/render-frame id path)
-    :links links))
+  [id & {:keys [path links view-factory] :or {path [(keyword id)]}}]
+  (assoc (element ::frame id path)
+    :links links
+    :view-factory view-factory))
 
 
 (defn togglelink
   [id & {:keys [path text] :or {path [(keyword id)]
                                 text (str/capitalize id)}}]
-  (assoc (element z/render-togglelink id path)
+  (assoc (element ::togglelink id path)
     :text text))
 
 
 (defn panel
   [id & {:keys [path title elements] :or {path [(keyword id)]
                                           title (str/capitalize id)}}]
-  (assoc (element z/render-panel id path) 
+  (assoc (element ::panel id path) 
     :title title
     :elements elements))
 
@@ -63,14 +62,14 @@
 (defn selectbox
   [id & {:keys [path label] :or {path [(keyword id)]
                                  label (str/capitalize id)}}]
-  (assoc (element z/render-selectbox id path)
+  (assoc (element ::selectbox id path)
     :label label))
 
 
 (defn table
   [id & {:keys [path label columns] :or {path [(keyword id)]
                                          label (str/capitalize id)}}]
-  (assoc (element z/render-table id path)
+  (assoc (element ::table id path)
     :label label
     :columns columns))
 
@@ -78,7 +77,7 @@
 (defn textfield
   [id & {:keys [path label] :or {path [(keyword id)]
                                  label (str/capitalize id)}}]
-  (assoc (element z/render-textfield id path)
+  (assoc (element ::textfield id path)
     :label label))
 
 

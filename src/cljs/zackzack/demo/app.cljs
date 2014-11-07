@@ -13,11 +13,10 @@
 ;; Initial setup
 
 (def state-ref
-  (atom  {:active {:view-id "addressbook"
-                   :view-model addressbook-view}
+  (atom  {:active nil
           :links {:addressbook
                   {:disabled false
-                   :active true}
+                   :active false}
                   :gallery
                   {:disabled true
                    :active false}}
@@ -43,6 +42,6 @@
   (om/root z/view-component
            state-ref
            {:target (. js/document (getElementById "app"))
-            :opts {:model frame-view}}))
+            :opts {:view-factory frame-view}}))
 
 (refresh)

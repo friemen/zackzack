@@ -119,24 +119,27 @@ This is how I like the code for boring UIs to look alike:
 ;; A concise "model" of the Addressbook UI
 
 
-(def addressbook-view
-  {:spec (panel "addressbook"
-                :elements [(panel "details"
-                                  :elements [(checkbox "private")
-                                             (textfield "name" :label "Full name")
-                                             (textfield "company")
-                                             (textfield "street")
-                                             (selectbox "city")
-                                             (datepicker "birthday")
-                                             (button "add" :text "Add Address") (button "reset")])
-                           (table "addresses"
-                                  :label "Addresses"
-                                  :columns [(column "name")
-                                            (column "company")
-                                            (column "street")
-                                            (column "city")
-                                            (column "birthday")])
-                           (button "edit") (button "delete") (button "reload")])
+(defn addressbook-view
+  [state]
+  {:spec
+   (fn [state]
+     (panel "addressbook"
+            :elements [(panel "details"
+                              :elements [(checkbox "private")
+                                         (textfield "name" :label "Full name")
+                                         (textfield "company")
+                                         (textfield "street")
+                                         (selectbox "city")
+                                         (datepicker "birthday")
+                                         (button "add" :text "Add Address") (button "reset")])
+                       (table "addresses"
+                              :label "Addresses"
+                              :columns [(column "name")
+                                        (column "company")
+                                        (column "street")
+                                        (column "city")
+                                        (column "birthday")])
+                       (button "edit") (button "delete") (button "reload")]))
    :ch addressbook-ch
    :actions {:add       add-address
              :edit      edit-address
@@ -232,6 +235,9 @@ Clone this repo. Make sure you're on Java 1.7 or higher.
 
 ### To enter interactive development
 
+* If you have just worked with `cljsbuild auto` and switch to
+  interactive mode make sure to delete resources/public/js before
+  starting the REPL.
 * Create a REPL session.
 * `(run)` starts an embedded Jetty web server.
 * `(browser-repl)` starts a browser based ClojureScript REPL.

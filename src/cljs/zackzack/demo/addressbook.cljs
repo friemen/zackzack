@@ -101,24 +101,27 @@
 ;; A concise "model" of the Addressbook UI
 
 
-(def addressbook-view
-  {:spec (panel "addressbook"
-                :elements [(panel "details"
-                                  :elements [(checkbox "private")
-                                             (textfield "name" :label "Full name")
-                                             (textfield "company")
-                                             (textfield "street")
-                                             (selectbox "city")
-                                             (datepicker "birthday")
-                                             (button "add" :text "Add Address") (button "reset")])
-                           (table "addresses"
-                                  :label "Addresses"
-                                  :columns [(column "name")
-                                            (column "company")
-                                            (column "street")
-                                            (column "city")
-                                            (column "birthday")])
-                           (button "edit") (button "delete") (button "reload")])
+(defn addressbook-view
+  [state]
+  {:spec
+   (fn [state]
+     (panel "addressbook"
+            :elements [(panel "details"
+                              :elements [(checkbox "private")
+                                         (textfield "name" :label "Full name")
+                                         (textfield "company")
+                                         (textfield "street")
+                                         (selectbox "city")
+                                         (datepicker "birthday")
+                                         (button "add" :text "Add Address") (button "reset")])
+                       (table "addresses"
+                              :label "Addresses"
+                              :columns [(column "name")
+                                        (column "company")
+                                        (column "street")
+                                        (column "city")
+                                        (column "birthday")])
+                       (button "edit") (button "delete") (button "reload")]))
    :ch addressbook-ch
    :actions {:add       add-address
              :edit      edit-address

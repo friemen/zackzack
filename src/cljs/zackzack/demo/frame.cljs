@@ -12,19 +12,24 @@
   (let [{:keys [view-model view-id]} (-> state :active)]
     (if (not= view-id id)
       (-> state
-          (assoc-in [:active] (case id
-                                "addressbook" {:view-model addressbook-view :view-id id}))
+          (assoc-in [:active] id)
           (assoc-in [:links (keyword view-id) :active] false)
           (assoc-in [:links (keyword id) :active] true))
       state)))
 
 
 
-(def frame-view
-  {:spec (frame "frame"
-                :path nil
-                :links [(togglelink "addressbook")
-                        (togglelink "gallery")])
+(defn frame-view
+  []
+  {:spec
+   (fn [state]
+     (frame "frame"
+            :path nil
+            :links [(togglelink "addressbook")
+                    (togglelink "gallery")]
+            :view-factory (case (:active state)
+                            "addressbook" addressbook-view
+                            nil)))
    :ch frame-ch
    :actions {:addressbook switch-view}})
 
