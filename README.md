@@ -118,7 +118,7 @@ boring UIs to look alike:
 
 
 ;; ----------------------------------------------------------------------------
-;; A concise "model" of the Addressbook UI
+;; A concise "model" of the Addressbook view
 
 
 (defn addressbook-view
@@ -152,7 +152,7 @@ boring UIs to look alike:
    :rules addressbook-rules})
 ```
 
-As you can see that there is almost no access to technical APIs left,
+As you can see there is almost no access to technical APIs left,
 I added a thin DSL layer on top of the React DOM API, you may consider
 it a means to succinctly parameterize Om components. However, it's
 likely that a concrete project will have to invent it's own DSL to
@@ -260,14 +260,14 @@ least Leiningen 2.5 installed.
 
 `lein do clean, jar` or execute `./produce.sh`.
 
-You'll find the build results in resources/public.
+You'll find the JS build results in resources/public.
 Use the index.html to start the frontend.
 
 ### To use cljsbuild auto and develop without REPL connection
 
 `lein with-profile auto do, cljsbuild auto` or execute `./auto.sh`.
 
-You'll find the build results in resources/public.
+You'll find the JS build results in resources/public.
 Use the testindex.html to start the frontend.
 
 

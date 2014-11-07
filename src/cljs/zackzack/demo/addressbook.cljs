@@ -98,7 +98,7 @@
 
 
 ;; ----------------------------------------------------------------------------
-;; A concise "model" of the Addressbook UI
+;; A concise "model" of the Addressbook view
 
 
 (defn addressbook-view
