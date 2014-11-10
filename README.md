@@ -233,14 +233,14 @@ State is kept in a global atom, according to Om's pgm model.
 A *view* bundles the specification on contents, a channel, actions, 
 rules and a validator.
 
-View contents is specified as data using a bunch of functions that
-create nested maps (see zackzack.specs namespace).
+Views and view contents is specified as data using a bunch of
+functions that create nested maps (see zackzack.specs namespace).
 
 There is a generic *view component* that starts a generic CSP-style
 controller process and builds components by interpretation of the
 spec-fn result.
 
-Each view component has one channel that takes every event
+Each view component has one input channel that takes every event
 submitted by JS event listeners. Any user input is routed as
 `:update` event through this channel and the application state is
 updated immediately with the result of a field specific *parser*
@@ -268,16 +268,21 @@ After processing of an `:update` or `:action` event a *rules* function
 [state -> state] is called that ensures that invariants regarding
 the components state are re-established.
 
-To enable *communication among controller processes* the channels can be
-defined before the actions. The channels are passed as part of the
-component model to the controller and to render functions. An action
-that wishes to send an event to a different process would use type
-`:action`, which, in turn, triggers the execution of an arbitrary action
-function.
+To enable *communication among controller processes* each view has its
+own input channel which is created when the view components state is
+initialised (IInitState). Upon mounting the chnannel is registered
+under the views id in a global map. The channel is removed from this
+map when it is unmounted. A view used as child of a parent view
+contains the channel of its parent in the `:parent-ch` entry in its
+spec. An action that wishes to send an event to a different process
+would use type `:action`, which, in turn, triggers the execution of an
+arbitrary action function.
 
 
 ## TODOs
-* Panels need layout
+* General navigation among views
+* Component access to global data like user, roles, rights
+* Layout rules for panels
 * Validation
 * Formatting / parsing of values
 * Controlling input focus

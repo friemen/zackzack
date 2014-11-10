@@ -1,16 +1,11 @@
 (ns zackzack.demo.addressbook
-  (:require [cljs.core.async :refer [put! chan]]
+  (:require 
             [ajax.core :refer [GET POST]]
+            [zackzack.components :refer [put-view!]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.specs :refer [button checkbox column datepicker panel
                                     selectbox table textfield view]]))
 
-
-;; View channels
-;; ----------------------------------------------------------------------------
-
-(def addressbook-ch (chan))
-(def addressdetails-ch (chan))
 
 
 ;; Remote access
@@ -18,9 +13,9 @@
 
 (defn load-addresses
   []
-  (GET "/addresses" {:handler #(put! addressbook-ch {:type :action
-                                                     :id "addresses"
-                                                     :payload %})}))
+  (GET "/addresses" {:handler #(put-view! "addressbook" {:type :action
+                                                         :id "addresses"
+                                                         :payload %})}))
 
 
 ;; ============================================================================
@@ -37,10 +32,10 @@
   [state event]
   (let [a  (get-all state :value fields)
         i  (-> state :edit-index)]
-    (put! addressbook-ch {:type :action
-                          :id "add"
-                          :address a
-                          :index i})
+    (put-view! "addressbook" {:type :action
+                              :id "add"
+                              :address a
+                              :index i})
     (-> state
         (assoc-in  [:edit-index] nil)
         (update-all :value fields nil))))
@@ -98,7 +93,6 @@
            (selectbox "city")
            (datepicker "birthday")
            (button "add" :text "Add Address") (button "reset")])
-        :ch addressdetails-ch
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
@@ -123,10 +117,10 @@
   [state event]
   (when-let [i (first (get-in state [:addresses :selection]))]    
     (let [a (get-in state [:addresses :items i])]
-      (put! addressdetails-ch {:type :action
-                               :id "edit"
-                               :address a
-                               :index i})))
+      (put-view! "details" {:type :action
+                            :id "edit"
+                            :address a
+                            :index i})))
   state)
 
 
@@ -176,7 +170,6 @@
                             (column "city")
                             (column "birthday")])
            (button "edit") (button "delete") (button "reload")])
-        :ch addressbook-ch
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    addressbook-delete

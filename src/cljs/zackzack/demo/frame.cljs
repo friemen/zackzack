@@ -4,9 +4,6 @@
             [zackzack.demo.addressbook :refer [addressbook-view]]))
 
 
-(def frame-ch (chan))
-
-
 (defn switch-view
   [state {:keys [id] :as event}]
   (let [{:keys [view-model view-id]} (-> state :bar :active)]
@@ -30,6 +27,5 @@
            (case (-> state :bar :active)
              "addressbook" (addressbook-view)
              nil)])
-        :ch frame-ch
         :actions {:addressbook switch-view}))
 

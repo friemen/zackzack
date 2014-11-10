@@ -212,6 +212,18 @@
                        :onChange update-fn})))))
 
 
+;; ----------------------------------------------------------------------------
+;; Keep all view channels in a global map
+
+(def channels (atom {}))
+
+
+(defn put-view!
+  [view-id message]
+  (if-let [ch (get @channels view-id)]
+    (put! ch message)
+    (log (str "WARNING: No channel for '" view-id "' found"))))
+
 
 ;; ----------------------------------------------------------------------------
 ;; A generic controller and component for views
@@ -226,10 +238,10 @@
 
 
 (defn controller
-  [state view-id {:keys [actions ch rules] :or {rules identity}}]
+  [state {:keys [actions parent-ch ch rules] :or {rules identity} :as spec}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
-      (log view-id type id)
+      (log (:id spec) type id)
       (case type
         :init
         (om/transact! state rules)
@@ -252,23 +264,33 @@
 
 
 (defn view
-  [state owner {:keys [spec view-factory]}]
-  (let [view (or spec (view-factory))
-        {:keys [spec-fn ch id path]} view]
-    (reify
-      om/IWillMount
-      (will-mount [_]
-        (controller state id view))
-      om/IDidMount
-      (did-mount [_]
-        (put! ch {:type :init :id id}))
-      om/IRender
-      (render [_]
-        (dom/div nil (build (sp/panel id
-                                      :path nil
-                                      :title nil
-                                      :elements (spec-fn state))
-                            ch state))))))
+  [state owner {:keys [spec view-factory ch]}]
+  (reify
+    om/IInitState
+    (init-state [_]
+      (assoc (or spec (view-factory))
+        :ch (chan)
+        :parent-ch ch))
+    om/IWillMount
+    (will-mount [_]
+      (let [{:keys [id ch] :as spec} (om/get-state owner [])]
+        (swap! channels assoc id ch)
+        (log (str "Channels: " (clojure.string/join "," (keys @channels))))
+        (controller state spec)))
+    om/IWillUnmount
+    (will-unmount [_]
+      (swap! channels dissoc (:id (om/get-state owner []))))
+    om/IDidMount
+    (did-mount [_]
+      (let [{:keys [id ch]} (om/get-state owner [])]
+        (put! ch {:type :init :id id})))
+    om/IRenderState
+    (render-state [_ {:keys [id ch spec-fn]}]
+      (dom/div nil (build (sp/panel id
+                                    :path nil
+                                    :title nil
+                                    :elements (spec-fn state))
+                          ch state)))))
 
 
 ;; ----------------------------------------------------------------------------

@@ -48,9 +48,7 @@
 (defn refresh
   []
   (om/root (fn [state owner {:keys [view-factory]}]
-             (let [view (view-factory)
-                   {:keys [ch]} view]
-               (om/component (z/build view ch state))))
+             (om/component (z/build (view-factory) nil state)))
            state-ref
            {:target (. js/document (getElementById "app"))
             :opts {:view-factory frame-view}}))
