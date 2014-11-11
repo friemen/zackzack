@@ -9,39 +9,32 @@ A running demo is hosted [here](http://www.falkoriemenschneider.de/zackzack/).
 
 ## Motivation
 
-I prefer a strict separation between presentation logic and markup
-(the view). The Om examples I'm aware of tend to mix both aspects
-a bit, however, IMO using channels as proposed by @swannodette is
-the key to strong decoupling.
+I prefer a strict separation between presentation logic and
+markup. The Om examples I'm aware of tend to mix both aspects a bit,
+however, IMO using channels as proposed by @swannodette is the key to
+strong decoupling.
 
 I'm interested in boring enterprise style forms-over-data UIs. I like
-to succinctly specify the content of views without mixing up the
-specification with presentation logic. However, things like state,
-actions, validation, rules, inter-component and remote communication
-need a place. I prefer to implement these using ordinary language
-features like atoms and pure functions, perhaps augmented with access
-to channels, if necessary.
+to succinctly specify the visual content of views without mixing it up
+with presentation logic. However, things like state, actions,
+validation, rules, inter-component and remote communication need a
+place. I prefer to implement these using ordinary language features
+like atoms and pure functions, perhaps augmented with access to
+channels, if necessary.
 
-My hope is to show that the combination of Om and core.async enables
-drastically simpler UI development. This is how I like the code for
-boring UIs to look alike:
+My hope is to show how the combination of Om and core.async enables
+drastically simpler enterprise-style UI development. This is how I
+like the code for boring UIs to look alike:
 
 ```clojure
-;; View channels
-;; ----------------------------------------------------------------------------
-
-(def addressbook-ch (chan))
-(def addressdetails-ch (chan))
-
-
 ;; Remote access
 ;; ----------------------------------------------------------------------------
 
 (defn load-addresses
   []
-  (GET "/addresses" {:handler #(put! addressbook-ch {:type :action
-                                                     :id "addresses"
-                                                     :payload %})}))
+  (GET "/addresses" {:handler #(put-view! "addressbook" {:type :action
+                                                         :id "addresses"
+                                                         :payload %})}))
 
 
 ;; ============================================================================
@@ -58,10 +51,10 @@ boring UIs to look alike:
   [state event]
   (let [a  (get-all state :value fields)
         i  (-> state :edit-index)]
-    (put! addressbook-ch {:type :action
-                          :id "add"
-                          :address a
-                          :index i})
+    (put-view! "addressbook" {:type :action
+                              :id "add"
+                              :address a
+                              :index i})
     (-> state
         (assoc-in  [:edit-index] nil)
         (update-all :value fields nil))))
@@ -119,7 +112,6 @@ boring UIs to look alike:
            (selectbox "city")
            (datepicker "birthday")
            (button "add" :text "Add Address") (button "reset")])
-        :ch addressdetails-ch
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
@@ -144,10 +136,10 @@ boring UIs to look alike:
   [state event]
   (when-let [i (first (get-in state [:addresses :selection]))]    
     (let [a (get-in state [:addresses :items i])]
-      (put! addressdetails-ch {:type :action
-                               :id "edit"
-                               :address a
-                               :index i})))
+      (put-view! "details" {:type :action
+                            :id "edit"
+                            :address a
+                            :index i})))
   state)
 
 
@@ -197,7 +189,6 @@ boring UIs to look alike:
                             (column "city")
                             (column "birthday")])
            (button "edit") (button "delete") (button "reload")])
-        :ch addressbook-ch
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    addressbook-delete
@@ -224,11 +215,17 @@ How can input focus be controlled?  The decision, where to take the
 focus to, could be part of an action or, more general, in an
 event-handler. React basically supports this:
 http://facebook.github.io/react/docs/working-with-the-browser.html
+I've seen that Reagents TodoMVC uses .focus within did-mount.
 
 
 ## My ideas and decisions so far
 
-State is kept in a global atom, according to Om's pgm model.
+Application state is kept in a global atom, according to Om's pgm
+model. Local component state is almost not used, so even "transient"
+information like currently selected items or enabled/disabled state of
+a component is part of global application state. This makes possible
+to directly influence this data in action functions that are not part
+of the component to be controlled.
 
 A *view* bundles the specification on contents, a channel, actions, 
 rules and a validator.

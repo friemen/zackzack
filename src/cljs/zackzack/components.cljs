@@ -247,7 +247,8 @@
         (om/transact! state rules)
         :update 
         (let [path (->> event :state om/path
-                        (drop (-> state om/path count)) vec)]
+                        (drop (-> state om/path count))
+                        (vec))]
           (om/transact! state #(let [{:keys [state key value parser] :or {parser identity}} event
                                      parsed-value (parser value)]
                                  (-> %
