@@ -13,13 +13,17 @@
 ;; Initial setup
 
 (def state-ref
-  (atom  {:bar {:active nil
-                :links {:addressbook
+  (atom  {:active nil
+          :bar {:links {:addressbook
                         {:disabled false
                          :active false}
                         :gallery
-                        {:disabled true
+                        {:disabled false
                          :active false}}}
+          :gallery {:text {:value ""}
+                    :select  {:value "One"
+                              :items [{:value "One"}
+                                      {:value "Two"}]}}
           :addressbook {:details {:edit-index nil
                                   :private {:value true}
                                   :company  {:value "itemis"}
@@ -47,10 +51,10 @@
 
 (defn refresh
   []
-  (om/root (fn [state owner {:keys [view-factory]}]
-             (om/component (z/build (view-factory) nil state)))
+  (om/root (fn [state owner {:keys [spec]}]
+             (om/component (z/build spec nil state)))
            state-ref
            {:target (. js/document (getElementById "app"))
-            :opts {:view-factory frame-view}}))
+            :opts {:spec (frame-view)}}))
 
 (refresh)

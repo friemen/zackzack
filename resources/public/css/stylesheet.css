@@ -84,14 +84,6 @@ td {
 
 /* Panel */
 
-.def-paneltitle {
-    font-size: 1em;
-    font-weight: bold;
-    color: #777;
-    text-align: left;
-    margin-left: 4px;
-}
-
 
 .def-panel {
     background: #fff;
@@ -178,3 +170,22 @@ a.def-togglelink:hover {
 }
 
 
+/* Separator */
+
+.def-separator {
+    border-bottom: 1px solid #777;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    margin-left: 4px;
+    width: 50%;
+}
+
+/* Title */
+
+.def-title {
+    font-size: 1em;
+    font-weight: bold;
+    color: #777;
+    text-align: left;
+    margin-left: 4px;
+}

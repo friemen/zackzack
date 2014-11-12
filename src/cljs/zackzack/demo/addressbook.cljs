@@ -84,15 +84,14 @@
 (defn addressdetails-view
   []
   (view "details"
-        :spec-fn
-        (fn [state]
-          [(checkbox "private")
-           (textfield "name" :label "Full name")
-           (textfield "company")
-           (textfield "street")
-           (selectbox "city")
-           (datepicker "birthday")
-           (button "add" :text "Add Address") (button "reset")])
+        :elements
+        [(checkbox "private")
+         (textfield "name" :label "Full name")
+         (textfield "company")
+         (textfield "street")
+         (selectbox "city")
+         (datepicker "birthday")
+         (button "add" :text "Add Address") (button "reset")]
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
@@ -157,19 +156,18 @@
 ;; A concise "model" of the Addressbook view
 
 (defn addressbook-view
-  []
-  (view "addressbook"
-        :spec-fn
-        (fn [state]
-          [(addressdetails-view)
-           (table "addresses"
-                  :label "Addresses"
-                  :columns [(column "name")
-                            (column "company")
-                            (column "street")
-                            (column "city")
-                            (column "birthday")])
-           (button "edit") (button "delete") (button "reload")])
+  [id]
+  (view id
+        :elements
+        [(addressdetails-view)
+         (table "addresses"
+                :label "Addresses"
+                :columns [(column "name")
+                          (column "company")
+                          (column "street")
+                          (column "city")
+                          (column "birthday")])
+         (button "edit") (button "delete") (button "reload")]
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    addressbook-delete

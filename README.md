@@ -277,7 +277,6 @@ arbitrary action function.
 
 
 ## TODOs
-* General navigation among views
 * Component access to global data like user, roles, rights
 * Layout rules for panels
 * Validation

@@ -4,7 +4,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
-            [zackzack.utils :refer [log]]
+            [zackzack.utils :refer [log as-vector]]
             [zackzack.specs :as sp]))
 
 
@@ -125,10 +125,11 @@
 
 
 (defn panel
-  [{:keys [title] :as state} _ {{:keys [title elements] :or {title title}} :spec ch :ch}]
+  [state _ {{:keys [id title elements]} :spec ch :ch}]
   (om/component
-   (wrap dom/div #js {:className "def-panel"}
-         (cons (dom/h1 #js {:className "def-paneltitle"} title)
+   (wrap dom/div #js {:id id
+                      :className "def-panel"}
+         (cons (dom/h1 #js {:className "def-title"} (or (:title state) title))
                (for [e elements]
                  (build e ch state))))))
 
@@ -166,7 +167,8 @@
       (empty? items) (with-label label (dom/p nil "No items to display."))  
       :else          (if (seq items)
                        (with-label label 
-                         (dom/table #js {:className "def-table"}
+                         (dom/table #js {:id id
+                                         :className "def-table"}
                                     (dom/thead nil
                                                (wrap dom/tr
                                                      (for [c columns]
@@ -212,6 +214,12 @@
                        :onChange update-fn})))))
 
 
+(defn separator
+  [_ _ {{:keys [id text]} :spec}]
+  (om/component
+   (dom/div #js {:className "def-separator"}
+            (dom/div #js {:className "def-title"} text))))
+
 ;; ----------------------------------------------------------------------------
 ;; Keep all view channels in a global map
 
@@ -256,42 +264,48 @@
                                      (validator path parsed-value)
                                      (rules)))))
         :action
-        (when-let [action (get actions (keyword id))]
+        (if-let [action-fn (get actions (keyword id))]
           (om/transact! state
                         #(-> %
-                             (action event)
-                             (rules)))))
+                             (action-fn event)
+                             (rules)))
+          (log (str "WARNING: No action defined for " (keyword id)))))
       (recur))))
 
 
 (defn view
-  [state owner {:keys [spec view-factory ch]}]
+  [state owner {:keys [spec ch]}]
+  #_(prn "VIEW" (:id spec))
   (reify
     om/IInitState
     (init-state [_]
-      (assoc (or spec (view-factory))
-        :ch (chan)
-        :parent-ch ch))
+      #_(prn "INIT" (:id spec))
+      {:ch (chan)
+       :parent-ch ch})
     om/IWillMount
     (will-mount [_]
-      (let [{:keys [id ch] :as spec} (om/get-state owner [])]
-        (swap! channels assoc id ch)
-        (log (str "Channels: " (clojure.string/join "," (keys @channels))))
-        (controller state spec)))
+      #_(prn "WILLMOUNT" (:id spec))
+      (swap! channels assoc (:id spec) (om/get-state owner :ch))
+      (controller state (merge spec (om/get-state owner))))
     om/IWillUnmount
     (will-unmount [_]
-      (swap! channels dissoc (:id (om/get-state owner []))))
+      #_(prn "WILLUNMOUNT" (:id spec))
+      (swap! channels dissoc (:id spec)))
     om/IDidMount
     (did-mount [_]
-      (let [{:keys [id ch]} (om/get-state owner [])]
-        (put! ch {:type :init :id id})))
+      #_(prn "DIDMOUNT" (:id spec))
+      (put! (om/get-state owner :ch) {:type :init :id (:id spec)}))
     om/IRenderState
-    (render-state [_ {:keys [id ch spec-fn]}]
-      (dom/div nil (build (sp/panel id
-                                    :path nil
-                                    :title nil
-                                    :elements (spec-fn state))
-                          ch state)))))
+    (render-state [_ {:keys [ch]}]
+      (let [{:keys [id title spec-fn elements]} spec
+            es (or elements (-> state spec-fn as-vector))
+            ch (om/get-state owner :ch)]
+        #_(prn "RENDER" id (count es))
+        (build (sp/panel id
+                         :title title
+                         :path nil
+                         :elements es)
+               ch state)))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -307,10 +321,12 @@
               ::sp/datepicker datepicker
               ::sp/panel      panel
               ::sp/selectbox  selectbox
+              ::sp/separator  separator
               ::sp/table      table
               ::sp/togglelink togglelink
               ::sp/textfield  textfield
               ::sp/view       view)]
-      #_(prn "build" (:type spec) (and state (om/path state)) (:path spec))
-      (om/build f (get-in state (:path spec)) {:opts {:spec spec :ch ch}}))))
+      #_(prn (str "BUILD" (:type spec) " " (:id spec)  " " (and state (om/path state)) " " (:path spec)))
+      (om/build f (get-in state (:path spec)) {:react-key (:id spec)
+                                               :opts {:spec spec :ch ch}}))))
 
