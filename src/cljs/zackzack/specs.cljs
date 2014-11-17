@@ -51,10 +51,11 @@
 
 
 (defn panel
-  [id & {:keys [path title elements] :or {path [(keyword id)]
-                                          title (string/capitalize id)}}]
+  [id & {:keys [path title elements layout] :or {path nil
+                                                 title :none}}]
   (assoc (spec ::panel id path)
     :title title
+    :layout layout
     :elements elements))
 
 
@@ -89,13 +90,14 @@
 
 
 (defn view
-  [id & {:keys [path title elements
+  [id & {:keys [path title layout elements
                 spec-fn rules actions ch] :or {path [(keyword id)]
                                                title (string/capitalize id)
                                                spec-fn (constantly [])
                                                rules identity}}]
   (assoc (spec ::view id path)
     :title title
+    :layout layout
     :elements elements
     :spec-fn spec-fn
     :rules rules

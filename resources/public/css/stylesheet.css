@@ -1,6 +1,8 @@
 
 body {
     font-family: helvetica,arial;
+    margin: 0 auto;
+    max-width: 800px;
 }
 
 /* Button */
@@ -87,9 +89,20 @@ td {
 
 .def-panel {
     background: #fff;
-    border-radius: 4px;
     margin-bottom: 16px;
 }
+
+.two-column-panel {
+    background: #fff;
+    margin-bottom: 16px;
+    column-count: 2;
+    -webkit-column-count: 2; 
+    -moz-column-count: 2;
+    column-width: 22em;
+    -webkit-column-width: 22em;
+    -moz-column-width: 22em;
+}
+
 
 /* Fields general */
 
@@ -120,6 +133,8 @@ label {
 
 .def-label {
     width: 6em;
+    top: 0.2em;
+    position: relative;
     float: left;
 }
 
@@ -130,11 +145,12 @@ label {
     margin-left: 4px;
 }
 
-/* Frame */
+/* Header */
 
 .def-header {
     font-size: 1em;
     height: 30px;
+    background-color: #f0f0f0;
 }
 
 
@@ -145,13 +161,12 @@ label {
     float: left;
     width: 8em;
     height: 30px;
-    background-color: #e080e0;
-    margin-right: 8px;
+    border-left: 1px solid #aaa;
     text-align: center;
 }
 
 .def-togglelink-span-disabled {
-    background-color: #A6A6A6;    
+    color: #A6A6A6;    
 }
 
 .def-togglelink-span-active {
@@ -166,7 +181,7 @@ a.def-togglelink {
 }
 
 a.def-togglelink:hover {
-    color: #ffffff;
+    color: #ff7070;
 }
 
 
@@ -189,3 +204,5 @@ a.def-togglelink:hover {
     text-align: left;
     margin-left: 4px;
 }
+
+

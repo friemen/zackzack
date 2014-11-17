@@ -85,13 +85,15 @@
   []
   (view "details"
         :elements
-        [(checkbox "private")
-         (textfield "name" :label "Full name")
-         (textfield "company")
-         (textfield "street")
-         (selectbox "city")
-         (datepicker "birthday")
-         (button "add" :text "Add Address") (button "reset")]
+        [(panel "fields" :layout :two-columns
+                :elements [(checkbox "private")
+                           (textfield "name" :label "Full name")
+                           (textfield "company")
+                           (textfield "street")
+                           (selectbox "city")
+                           (datepicker "birthday")])
+         (panel "actions" :elements
+                [(button "add" :text "Add Address") (button "reset")])]
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
@@ -161,7 +163,6 @@
         :elements
         [(addressdetails-view)
          (table "addresses"
-                :label "Addresses"
                 :columns [(column "name")
                           (column "company")
                           (column "street")

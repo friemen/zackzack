@@ -66,8 +66,9 @@
   (om/component
    (dom/div nil
             (wrap dom/div #js {:className "def-header"}
-                  (for [l links]
-                    (build l ch (:links state)))))))
+                  (conj (vec (for [l links]
+                               (build l ch (:links state))))
+                        (dom/div #js {:className "def-togglelink-span"}))))))
 
 
 (defn button
@@ -125,13 +126,17 @@
 
 
 (defn panel
-  [state _ {{:keys [id title elements]} :spec ch :ch}]
+  [state _ {{:keys [id title layout elements]} :spec ch :ch}]
   (om/component
-   (wrap dom/div #js {:id id
-                      :className "def-panel"}
-         (cons (dom/h1 #js {:className "def-title"} (or (:title state) title))
-               (for [e elements]
-                 (build e ch state))))))
+   (dom/div nil
+            (if-let [t (if (not= title :none) (or (:title state) title))]
+      (dom/h1 #js {:className "def-title"} t))
+    (wrap dom/div #js {:id id
+                       :className (case layout
+                                    :two-columns "two-column-panel"
+                                    "def-panel")}
+          (for [e elements]
+            (build e ch state))))))
 
 
 
@@ -297,13 +302,13 @@
       (put! (om/get-state owner :ch) {:type :init :id (:id spec)}))
     om/IRenderState
     (render-state [_ {:keys [ch]}]
-      (let [{:keys [id title spec-fn elements]} spec
+      (let [{:keys [id title layout elements spec-fn]} spec
             es (or elements (-> state spec-fn as-vector))
             ch (om/get-state owner :ch)]
-        #_(prn "RENDER" id (count es))
+        #_(prn "RENDER" id (count es) layout)
         (build (sp/panel id
                          :title title
-                         :path nil
+                         :layout layout
                          :elements es)
                ch state)))))
 
