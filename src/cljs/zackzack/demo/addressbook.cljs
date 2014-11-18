@@ -3,7 +3,8 @@
             [ajax.core :refer [GET POST]]
             [zackzack.components :refer [put-view!]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
-            [zackzack.specs :refer [button checkbox column datepicker panel
+            [zackzack.specs :refer [action-link button checkbox column
+                                    datepicker panel
                                     selectbox table textfield view]]))
 
 
@@ -167,8 +168,11 @@
                           (column "company")
                           (column "street")
                           (column "city")
-                          (column "birthday")])
-         (button "edit") (button "delete") (button "reload")]
+                          (column "birthday")]
+                :actions-fn (fn [item]
+                              [(action-link "edit" :image "images/pencil.png")
+                               (action-link "delete" :image "images/cross.png")]))
+         (button "reload")]
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    addressbook-delete

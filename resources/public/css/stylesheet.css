@@ -5,6 +5,17 @@ body {
     max-width: 800px;
 }
 
+/* Action links */
+
+.def-actionlinks {
+    text-align: center;
+}
+
+.def-actionlink  {
+    margin-left: 4px;
+}
+
+
 /* Button */
 
 .def-button {
@@ -206,3 +217,52 @@ a.def-togglelink:hover {
 }
 
 
+/* Popup Menu */
+
+	/* <div style="position:fixed;top:100;left:100;" class="popup-menu"> */
+	/*     <ul> */
+	/* 	<li><a href="#"><img src="images/pencil.png"/>Edit</a></li> */
+	/* 	<li><a href="#"><img src="images/cross.png"/>Delete</a></li> */
+	/*     </ul> */
+	/* </div> */
+
+
+/* .popup-menu { */
+/*     font-size: 0.5em; */
+/*     border: 1px solid grey; */
+/*     background-color: #f0f0f0; */
+/*     padding: 0px; */
+/*     border-radius: 4px; */
+/*     box-shadow: 4px 4px 5px #888888; */
+/* } */
+
+/* .popup-menu ul { */
+/*     min-width: 5em; */
+/*     margin: 0px; */
+/*     padding: 0px; */
+/*     list-style-type: none; */
+/* } */
+
+/* .popup-menu li { */
+/*     padding-top: 4px; */
+/*     padding-bottom: 4px; */
+/*     padding-left: 1em; */
+/*     padding-right: 1em; */
+/*     list-style-type: none; */
+/* } */
+
+/* .popup-menu a { */
+/*     color: #404040; */
+/*     text-decoration: none; */
+/* } */
+
+/* .popup-menu li:hover { */
+/*     display: block; */
+/*     background-color: #b0b0b0; */
+/* } */
+
+/* .popup-menu img { */
+/*     position: relative; */
+/*     top: 4px; */
+/*     margin-right: 8px; */
+/* } */

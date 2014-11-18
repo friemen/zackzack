@@ -155,18 +155,32 @@
 
 
 (defn table
-  [{:keys [items visible selection] :as state} _ {{:keys [id label columns] :as spec} :spec ch :ch}]
+  [{:keys [items visible selection] :as state} _ {{:keys [id label columns actions-fn] :as spec} :spec ch :ch}]
   (warn-if-state-missing spec state)
   (om/component
-   (letfn [(render-row [index item selected?]
+   (letfn [(update-index! [index]
+             (put! ch {:type :update
+                       :id id
+                       :state state
+                       :key :selection
+                       :value #{index}}))
+           (render-actions [index item]
+             (wrap dom/td #js {:className "def-actionlinks"}
+                   (for [{:keys [id text image]} (actions-fn item)]
+                     (dom/a #js {:href "#"
+                                 :className "def-actionlink"
+                                 :onClick #(do
+                                             (update-index! index)
+                                             (action! ch id spec %)
+                                             (-> % .preventDefault))}
+                            (dom/img #js {:title text
+                                          :src image})))))
+           (render-row [index item selected?]
              (wrap dom/tr #js {:className (and selected? "selected")
-                               :onClick #(put! ch {:type :update
-                                                   :id id
-                                                   :state state
-                                                   :key :selection
-                                                   :value #{index}})}
-                   (for [c columns]
-                     (dom/td nil ((:getter c) item)))))]
+                               :onClick #(update-index! index)}
+                   (conj (vec (for [c columns]
+                                (dom/td nil ((:getter c) item))))
+                         (if actions-fn (render-actions index item)))))]
      (cond
       (not visible)  (dom/div nil)
       (empty? items) (with-label label (dom/p nil "No items to display."))  
@@ -176,8 +190,10 @@
                                          :className "def-table"}
                                     (dom/thead nil
                                                (wrap dom/tr
-                                                     (for [c columns]
-                                                       (dom/th nil (:title c)))))
+                                                     (conj 
+                                                      (vec (for [c columns]
+                                                             (dom/th nil (:title c))))
+                                                      (if actions-fn (dom/th nil "Actions")))))
                                     (wrap dom/tbody
                                           (for [[i item] (map vector (range) items)]
                                             (render-row i item (get selection i)))))))))))

@@ -10,6 +10,14 @@
    :path path})
 
 
+(defn action-link
+  [id & {:keys [text image] :or {text (string/capitalize id)
+                                 image (str "images/" id ".png")}}]
+  {:id id
+   :text text
+   :image image})
+
+
 (defn bar
   [id & {:keys [path links] :or {path [(keyword id)]}}]
   (assoc (spec ::bar id path)
@@ -75,11 +83,12 @@
 
 
 (defn table
-  [id & {:keys [path label columns] :or {path [(keyword id)]
-                                         label (string/capitalize id)}}]
+  [id & {:keys [path label columns actions-fn] :or {path [(keyword id)]
+                                                    label (string/capitalize id)}}]
   (assoc (spec ::table id path)
     :label label
-    :columns columns))
+    :columns columns
+    :actions-fn actions-fn))
 
 
 (defn textfield
