@@ -117,7 +117,7 @@
 
 (defn addressbook-edit!
   [state event]
-  (when-let [i (first (get-in state [:addresses :selection]))]    
+  (when-let [i (first (get-in state [:addresses :selection]))]
     (let [a (get-in state [:addresses :items i])]
       (put-view! "details" {:type :action
                             :id "edit"
@@ -150,8 +150,8 @@
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)]
     (-> state
-        (assoc-in [:edit :disabled]             none-sel?)
-        (assoc-in [:delete :disabled]           none-sel?))))
+        (assoc-in [:edit :disabled]   none-sel?)
+        (assoc-in [:delete :disabled] none-sel?))))
 
 
 

@@ -135,7 +135,7 @@ like the code for boring UIs to look alike:
 
 (defn addressbook-edit!
   [state event]
-  (when-let [i (first (get-in state [:addresses :selection]))]    
+  (when-let [i (first (get-in state [:addresses :selection]))]
     (let [a (get-in state [:addresses :items i])]
       (put-view! "details" {:type :action
                             :id "edit"
@@ -168,8 +168,8 @@ like the code for boring UIs to look alike:
   [state]
   (let [none-sel?  (-> state :addresses :selection empty?)]
     (-> state
-        (assoc-in [:edit :disabled]             none-sel?)
-        (assoc-in [:delete :disabled]           none-sel?))))
+        (assoc-in [:edit :disabled]   none-sel?)
+        (assoc-in [:delete :disabled] none-sel?))))
 
 
 
@@ -186,8 +186,11 @@ like the code for boring UIs to look alike:
                           (column "company")
                           (column "street")
                           (column "city")
-                          (column "birthday")])
-         (button "edit") (button "delete") (button "reload")]
+                          (column "birthday")]
+                :actions-fn (fn [item]
+                              [(action-link "edit" :image "images/pencil.png")
+                               (action-link "delete" :image "images/cross.png")]))
+         (button "reload")]
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    addressbook-delete
