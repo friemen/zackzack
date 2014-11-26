@@ -259,7 +259,18 @@
 ;; A generic controller and component for views
 
 
-(defn update-state
+(defn- attach-messages
+  [state]
+  (let [results (::validation-results state)]
+    (reduce (fn [state path]
+              (assoc-in state
+                        (conj (vec (butlast path)) :message)
+                        (apply str (e/messages-for path results))))
+            state
+            (->> results (keys) (mapcat identity)))))
+
+
+(defn- update-state
   [state constraints path {:keys [key value parser]:or {parser identity} :as event}]
   (let [message-path (conj path :message)
         value-path   (conj path key)
@@ -270,14 +281,11 @@
       (-> state
           (assoc-in value-path value)
           (assoc-in message-path "Invalid format"))
-      (let [state   (assoc-in state value-path parsed)
-            results (e/validate (e/sub-set constraints value-path) state)]
-        (reduce (fn [state path]
-                  (assoc-in state
-                            (conj (vec (butlast path)) :message)
-                            (apply str (e/messages-for path results))))
-                state
-                (->> constraints (keys) (mapcat identity) (map as-vector)))))))
+      (let [state (assoc-in state value-path parsed)]
+        (-> state
+            (update-in [::validation-results]
+                       #(e/update % (e/validate (e/sub-set constraints value-path) state)))
+            (attach-messages))))))
 
 
 (defn controller
