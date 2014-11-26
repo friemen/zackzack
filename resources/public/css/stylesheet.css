@@ -58,7 +58,7 @@ body {
 .def-checkbox {
     border: 1px solid #a0a0a0;
     margin-left: 4px;
-    height: 1.8em;
+    margin-bottom: 0.7em;
     border-radius: 4px;
 }
 
@@ -151,10 +151,20 @@ label {
 
 /* Error */
 
-.error-message {
+.error-message-beneath {
     color: #f00000;
-    margin-left: 4px;
+    font-size: small;
+    top: 0.2em;
+    margin-left: 10px;
 }
+
+.error-message-below {
+    color: #f00000;
+    font-size: small;
+    display: block;
+    text-indent: 7.5em;
+}
+
 
 /* Header */
 

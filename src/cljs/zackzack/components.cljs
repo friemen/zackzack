@@ -21,16 +21,25 @@
 
 
 (defn- with-label
-  ([label content]
-     (with-label label nil content))
-  ([label message content]
-     (dom/div #js {:className "def-labeledwidget"}
-              (if label
-                (dom/label nil
-                           (dom/span #js {:className "def-label"} label)
-                           content)
-                content)
-              (if message (dom/span #js {:className "error-message"} message)))))
+  [label content]
+  (dom/div #js {:className "def-labeledwidget"}
+           (if label
+             (dom/label nil
+                        (dom/span #js {:className "def-label"} label)
+                        content)
+             content)))
+
+
+(defn- with-message
+  [message position content]
+  (if message
+    (let [class (if (= position :below)
+                   "error-message-below"
+                   "error-message-beneath")]
+      (dom/span nil
+                content
+                (dom/span #js {:className class} message)))
+    content))
 
 
 (defn- warn-if-state-missing
@@ -84,19 +93,20 @@
 
 
 (defn checkbox
-  [{:keys [disabled value message] :as state} _ {{:keys [id label]} :spec ch :ch}]
+  [{:keys [disabled value message] :as state} _ {{:keys [id label message-position]} :spec ch :ch}]
   (om/component
-   (with-label label message
-     (dom/input #js {:id id
-                     :className "def-checkbox"
-                     :type "checkbox"
-                     :disabled disabled
-                     :checked value
-                     :onChange #(put! ch {:type :update
-                                          :id id
-                                          :state state
-                                          :key :value
-                                          :value (-> % .-target .-checked)})}))))
+   (with-label label
+     (with-message message :beneath
+       (dom/input #js {:id id
+                       :className "def-checkbox"
+                       :type "checkbox"
+                       :disabled disabled
+                       :checked value
+                       :onChange #(put! ch {:type :update
+                                            :id id
+                                            :state state
+                                            :key :value
+                                            :value (-> % .-target .-checked)})})))))
 
 
 (defn datepicker
@@ -114,16 +124,17 @@
       om/IRenderState
       (render-state [_ {:keys [ch]}]
         (let [{:keys [message disabled value]} state
-              {:keys [label id]} spec]
-            (with-label label message
-              (dom/input #js {:className "def-field"
-                              :type "text"
-                              :value (or value "")
-                              :disabled disabled
-                              :id id
-                              :ref (name id)
-                              :onBlur update-fn
-                              :onChange update-fn})))))))
+              {:keys [id label message-position]} spec]
+          (with-label label
+                (with-message message message-position
+                  (dom/input #js {:className "def-field"
+                                  :type "text"
+                                  :value (or value "")
+                                  :disabled disabled
+                                  :id id
+                                  :ref (name id)
+                                  :onBlur update-fn
+                                  :onChange update-fn}))))))))
 
 
 (defn panel
@@ -136,23 +147,25 @@
                        :className (case layout
                                     :two-columns "two-column-panel"
                                     "def-panel")}
-          (for [e elements]
-            (build e ch state))))))
+          (let [pos (if layout :below :beneath)]
+            (for [e elements :let [e' (if e (assoc e :message-position pos))]]
+              (build e' ch state)))))))
 
 
 
 (defn selectbox
-  [{:keys [value message items] :as state} _ {{:keys [id label] :as spec} :spec ch :ch}]
+  [{:keys [value message items] :as state} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
   (warn-if-state-missing spec state)
   (om/component
-   (with-label label message
-     (wrap dom/select #js {:id id
-                           :className "def-field"
-                           :value (or value "")
-                           :ref (name id)
-                           :onChange (partial update! ch id state)}
-           (for [i items]
-             (dom/option (clj->js i) (:value i)))))))
+   (with-label label
+     (with-message message message-position
+       (wrap dom/select #js {:id id
+                             :className "def-field"
+                             :value (or value "")
+                             :ref (name id)
+                             :onChange (partial update! ch id state)}
+             (for [i items]
+               (dom/option (clj->js i) (:value i))))))))
 
 
 (defn table
@@ -221,19 +234,20 @@
 
 
 (defn textfield
-  [{:keys [value message disabled] :as state} _ {{:keys [id label] :as spec} :spec ch :ch}]
+  [{:keys [value message disabled] :as state} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
   (warn-if-state-missing spec state)
   (let [update-fn (partial update! ch id state)]
     (om/component
-     (with-label label message
-       (dom/input #js {:className "def-field"
-                       :type "text"
-                       :value (or value "")
-                       :disabled disabled
-                       :id id
-                       :ref (name id)
-                       :onBlur update-fn
-                       :onChange update-fn})))))
+     (with-label label
+       (with-message message message-position
+         (dom/input #js {:className "def-field"
+                         :type "text"
+                         :value (or value "")
+                         :disabled disabled
+                         :id id
+                         :ref (name id)
+                         :onBlur update-fn
+                         :onChange update-fn}))))))
 
 
 (defn separator
