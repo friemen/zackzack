@@ -1,11 +1,13 @@
 (ns zackzack.demo.addressbook
-  (:require 
+  (:require [examine.constraints :as c]
+            [examine.core :as e]
             [ajax.core :refer [GET POST]]
             [zackzack.components :refer [put-view!]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.specs :refer [action-link button checkbox column
                                     datepicker panel
-                                    selectbox table textfield view]]))
+                                    selectbox table textfield view]])
+  (:require-macros [examine.macros :refer [defvalidator]]))
 
 
 
@@ -24,6 +26,21 @@
 
 
 (def fields [:private :name :company :street :city :birthday])
+
+
+(def address-constraints
+  (e/rule-set
+   
+   [[:name :value]]
+   c/required (c/min-length 3)
+   
+   [[:private :value] [:company :value]]
+   (fn [p? c]
+     (if p?
+       (if (> (count c) 0)
+         "Company must be empty")
+       (if (empty? c)
+         "Company must not be empty")))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -98,7 +115,8 @@
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
-        :rules addressdetails-rules))
+        :rules addressdetails-rules
+        :constraints address-constraints))
 
 
 

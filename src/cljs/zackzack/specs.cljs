@@ -100,7 +100,8 @@
 
 (defn view
   [id & {:keys [path title layout elements
-                spec-fn rules actions ch] :or {path [(keyword id)]
+                spec-fn rules actions ch
+                constraints] :or {path [(keyword id)]
                                                title (string/capitalize id)
                                                spec-fn (constantly [])
                                                rules identity}}]
@@ -111,4 +112,5 @@
     :spec-fn spec-fn
     :rules rules
     :actions actions
+    :constraints constraints
     :ch ch))

@@ -4,6 +4,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
+            [examine.core :as e]
             [zackzack.utils :refer [log as-vector]]
             [zackzack.specs :as sp]))
 
@@ -83,9 +84,9 @@
 
 
 (defn checkbox
-  [{:keys [disabled value] :as state} _ {{:keys [id label]} :spec ch :ch}]
+  [{:keys [disabled value message] :as state} _ {{:keys [id label]} :spec ch :ch}]
   (om/component
-   (with-label label nil
+   (with-label label message
      (dom/input #js {:id id
                      :className "def-checkbox"
                      :type "checkbox"
@@ -258,16 +259,29 @@
 ;; A generic controller and component for views
 
 
-(defn validator
-  [state path value]
+(defn update-state
+  [state constraints path {:keys [key value parser]:or {parser identity} :as event}]
   (let [message-path (conj path :message)
-        ;TODO this is a dummy:
-        validate-fn #(if (and (string? %) (empty? %)) "Please enter a value.")]
-    (assoc-in state message-path (validate-fn value))))
+        value-path   (conj path key)
+        [parsed ex]  (try [(parser value) nil]
+                          (catch js/Error ex
+                            [nil ex]))]
+    (if ex
+      (-> state
+          (assoc-in value-path value)
+          (assoc-in message-path "Invalid format"))
+      (let [state   (assoc-in state value-path parsed)
+            results (e/validate (e/sub-set constraints value-path) state)]
+        (reduce (fn [state path]
+                  (assoc-in state
+                            (conj (vec (butlast path)) :message)
+                            (apply str (e/messages-for path results))))
+                state
+                (->> constraints (keys) (mapcat identity) (map as-vector)))))))
 
 
 (defn controller
-  [state {:keys [actions parent-ch ch rules] :or {rules identity} :as spec}]
+  [state {:keys [actions parent-ch ch rules constraints] :or {rules identity} :as spec}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
       (log (:id spec) type id)
@@ -278,12 +292,9 @@
         (let [path (->> event :state om/path
                         (drop (-> state om/path count))
                         (vec))]
-          (om/transact! state #(let [{:keys [state key value parser] :or {parser identity}} event
-                                     parsed-value (parser value)]
-                                 (-> %
-                                     (assoc-in (conj path key) parsed-value)
-                                     (validator path parsed-value)
-                                     (rules)))))
+          (om/transact! state #(-> %
+                                   (update-state constraints path event)
+                                   (rules))))
         :action
         (if-let [action-fn (get actions (keyword id))]
           (om/transact! state

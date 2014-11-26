@@ -44,6 +44,21 @@ like the code for boring UIs to look alike:
 (def fields [:private :name :company :street :city :birthday])
 
 
+(def address-constraints
+  (e/rule-set
+   
+   [[:name :value]]
+   c/required (c/min-length 3)
+   
+   [[:private :value] [:company :value]]
+   (fn [p? c]
+     (if p?
+       (if (> (count c) 0)
+         "Company must be empty")
+       (if (empty? c)
+         "Company must not be empty")))))
+
+
 ;; ----------------------------------------------------------------------------
 ;; Actions are functions [state event -> state]
 
@@ -280,7 +295,6 @@ arbitrary action function.
 
 ## TODOs
 * Component access to global data like user, roles, rights
-* Validation
 * Formatting / parsing of values
 * Controlling input focus
 

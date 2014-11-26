@@ -15,6 +15,7 @@
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  [om "0.7.1"]
                  [cljs-ajax "0.3.3"]
+                 [examine "1.2.0"]
                  ;; clj deps
                  [ring "1.3.1"]
                  [ring-transit "0.1.2"]
