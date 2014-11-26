@@ -96,20 +96,15 @@ like the code for boring UIs to look alike:
 
 (defn addressdetails-rules
   [state]
-  (let [;; TODO use real validation
-        invalid?   (->> fields
-                        (get-all state :value)
-                        (filter #(-> % first #{:name :street :city :birthday}))
-                        (map second)
-                        (some empty?))
-        edit?      (-> state :edit-index)
-        private?   (-> state :private :value)]
+  (let [invalid?  (->> state (e/validate address-constraints) (e/has-errors?))
+        edit?     (-> state :edit-index)
+        private?  (-> state :private :value)]
     (-> state
         (assoc-in [:add :text]         (if edit? "Update"))
         (assoc-in [:title]             (if edit? "Edit Details" "Details"))
         (assoc-in [:company :disabled] private?)
+        (update-in [:company :value]   #(if private? "" %))
         (assoc-in [:add :disabled]     (if invalid? true)))))
-
 
 
 ;; ----------------------------------------------------------------------------

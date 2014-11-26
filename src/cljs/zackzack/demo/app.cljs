@@ -25,7 +25,7 @@
                                       {:value "Two"}]}}
           :addressbook {:details {:edit-index nil
                                   :private {:value true}
-                                  :company  {:value "itemis"}
+                                  :company  {:value ""}
                                   :name {:value "foo"}
                                   :street {:value "bar"}
                                   :city {:value "Bonn"

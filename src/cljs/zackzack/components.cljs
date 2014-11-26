@@ -270,8 +270,16 @@
             (->> results (keys) (mapcat identity)))))
 
 
+(defn- validate
+  [state constraints]
+  (-> state
+      (update-in [::validation-results]
+                 #(e/update % (e/validate constraints state)))
+      (attach-messages)))
+
+
 (defn- update-state
-  [state constraints path {:keys [key value parser]:or {parser identity} :as event}]
+  [state path {:keys [key value parser]:or {parser identity} :as event}]
   (let [message-path (conj path :message)
         value-path   (conj path key)
         [parsed ex]  (try [(parser value) nil]
@@ -281,11 +289,7 @@
       (-> state
           (assoc-in value-path value)
           (assoc-in message-path "Invalid format"))
-      (let [state (assoc-in state value-path parsed)]
-        (-> state
-            (update-in [::validation-results]
-                       #(e/update % (e/validate (e/sub-set constraints value-path) state)))
-            (attach-messages))))))
+      (assoc-in state value-path parsed))))
 
 
 (defn controller
@@ -301,8 +305,9 @@
                         (drop (-> state om/path count))
                         (vec))]
           (om/transact! state #(-> %
-                                   (update-state constraints path event)
-                                   (rules))))
+                                   (update-state path event)
+                                   (rules)
+                                   (validate (e/sub-set constraints (conj path (:key event)))))))
         :action
         (if-let [action-fn (get actions (keyword id))]
           (om/transact! state
