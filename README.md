@@ -92,7 +92,7 @@ like the code for boring UIs to look alike:
 
 
 ;; ----------------------------------------------------------------------------
-;; Rules are represented by a sole function [state -> state]
+;; All rules are represented by one function [state -> state]
 
 (defn addressdetails-rules
   [state]
@@ -105,6 +105,7 @@ like the code for boring UIs to look alike:
         (assoc-in [:company :disabled] private?)
         (update-in [:company :value]   #(if private? "" %))
         (assoc-in [:add :disabled]     (if invalid? true)))))
+
 
 
 ;; ----------------------------------------------------------------------------
@@ -126,7 +127,8 @@ like the code for boring UIs to look alike:
         :actions {:add       details-add!
                   :edit      details-edit
                   :reset     details-reset}
-        :rules addressdetails-rules))
+        :rules addressdetails-rules
+        :constraints address-constraints))
 
 
 
@@ -154,9 +156,14 @@ like the code for boring UIs to look alike:
   state)
 
 
-(defn addressbook-delete
+(defn <addressbook-delete
   [state event]
-  (remove-selected state [:addresses]))
+  (let [question (str "You're about to delete item "
+                      (-> state :addresses :selection first)
+                      ". Are you sure?")]
+    (go (if (= :ok (<! (<ask question)))
+          (remove-selected state [:addresses])
+          state))))
 
 
 (defn addressbook-reload
@@ -203,7 +210,7 @@ like the code for boring UIs to look alike:
          (button "reload")]
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
-                  :delete    addressbook-delete
+                  :delete    <addressbook-delete
                   :reload    addressbook-reload
                   :addresses addressbook-replace}
         :rules addressbook-rules))
