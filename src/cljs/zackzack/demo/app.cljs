@@ -1,6 +1,7 @@
 (ns zackzack.demo.app
   "Umbrella to start Om application"
   (:require [om.core :as om :include-macros true]
+            [om.dom :as dom]
             [cljs.core.async :refer [chan]]
             [zackzack.components :as z]
             [zackzack.demo.frame :refer [frame-view]]
@@ -13,6 +14,8 @@
 
 (def state-ref
   (atom  {:active nil
+          :glass {:active false
+                  :text "Message"} 
           :bar {:links {:addressbook
                         {:disabled false
                          :active false}
@@ -48,10 +51,10 @@
                                              :birthday "01.01.1955"}]}}}))
 
 
+
 (defn refresh
   []
-  (om/root (fn [state owner {:keys [spec]}]
-             (om/component (z/build spec nil state)))
+  (om/root z/app
            state-ref
            {:target (. js/document (getElementById "app"))
             :opts {:spec (frame-view)}}))

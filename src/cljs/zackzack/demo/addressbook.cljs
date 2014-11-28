@@ -2,12 +2,13 @@
   (:require [examine.constraints :as c]
             [examine.core :as e]
             [ajax.core :refer [GET POST]]
-            [zackzack.components :refer [put-view!]]
+            [zackzack.components :refer [put-view! <ask]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.specs :refer [action-link button checkbox column
                                     datepicker panel
                                     selectbox table textfield view]])
-  (:require-macros [examine.macros :refer [defvalidator]]))
+  (:require-macros [examine.macros :refer [defvalidator]]
+                   [cljs.core.async.macros :refer [go go-loop]]))
 
 
 
@@ -140,9 +141,14 @@
   state)
 
 
-(defn addressbook-delete
+(defn <addressbook-delete
   [state event]
-  (remove-selected state [:addresses]))
+  (let [question (str "You're about to delete item "
+                      (-> state :addresses :selection first)
+                      ". Are you sure?")]
+    (go (if (= :ok (<! (<ask question)))
+          (remove-selected state [:addresses])
+          state))))
 
 
 (defn addressbook-reload
@@ -189,7 +195,7 @@
          (button "reload")]
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
-                  :delete    addressbook-delete
+                  :delete    <addressbook-delete
                   :reload    addressbook-reload
                   :addresses addressbook-replace}
         :rules addressbook-rules))

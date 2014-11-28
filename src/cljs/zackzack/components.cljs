@@ -1,7 +1,8 @@
 (ns zackzack.components
   "Om components"
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
-  (:require [om.core :as om :include-macros true]
+  (:require [cljs.core.async.impl.protocols :as asyncimpl]
+            [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
             [examine.core :as e]
@@ -43,16 +44,16 @@
 
 
 (defn- warn-if-state-missing
-  [spec state]
-  (when-not state
-    (log (str "No state defined for path " (:path spec)))))
+  [spec cursor]
+  (when-not cursor
+    (log (str "No cursor defined for path " (:path spec)))))
 
 
 (defn- update!
-  [ch id state evt]
+  [ch id cursor evt]
   (put! ch {:type :update
             :id id
-            :state state
+            :cursor cursor
             :key :value
             :value (-> evt .-target .-value)}))
 
@@ -69,31 +70,39 @@
 
 (declare view)
 (declare build)
+(declare glass)
+
+
+(defn app [cursor owner {:keys [spec]}]
+  (om/component
+   (dom/div nil
+            (build spec nil cursor)
+            (om/build glass (:glass cursor)))))
 
 
 (defn bar
-  [{:keys [active] :as state} _ {{:keys [links]} :spec ch :ch}]
+  [{:keys [active] :as cursor} _ {{:keys [links]} :spec ch :ch}]
   (om/component
    (dom/div nil
             (wrap dom/div #js {:className "def-header"}
                   (conj (vec (for [l links]
-                               (build l ch (:links state))))
+                               (build l ch (:links cursor))))
                         (dom/div #js {:className "def-togglelink-span"}))))))
 
 
 (defn button
-  [{:keys [disabled] :as state} _ {{:keys [id text] :as spec} :spec ch :ch}]
+  [{:keys [disabled] :as cursor} _ {{:keys [id text] :as spec} :spec ch :ch}]
   (om/component
    (dom/input #js {:id id
                    :className "def-button"
                    :type "button"
-                   :value (or (:text state) text)
+                   :value (or (:text cursor) text)
                    :disabled disabled
                    :onClick (partial action! ch id spec)})))
 
 
 (defn checkbox
-  [{:keys [disabled value message] :as state} _ {{:keys [id label message-position]} :spec ch :ch}]
+  [{:keys [disabled value message] :as cursor} _ {{:keys [id label message-position]} :spec ch :ch}]
   (om/component
    (with-label label
      (with-message message :beneath
@@ -104,14 +113,14 @@
                        :checked value
                        :onChange #(put! ch {:type :update
                                             :id id
-                                            :state state
+                                            :cursor cursor
                                             :key :value
                                             :value (-> % .-target .-checked)})})))))
 
 
 (defn datepicker
-  [state owner {:keys [spec ch]}]
-  (let [update-fn (partial update! ch (:id spec) state)]
+  [cursor owner {:keys [spec ch]}]
+  (let [update-fn (partial update! ch (:id spec) cursor)]
     (reify
       om/IInitState
       (init-state [_]
@@ -123,7 +132,7 @@
                             :format "DD.MM.YYYY"})))
       om/IRenderState
       (render-state [_ {:keys [ch]}]
-        (let [{:keys [message disabled value]} state
+        (let [{:keys [message disabled value]} cursor
               {:keys [id label message-position]} spec]
           (with-label label
                 (with-message message message-position
@@ -137,25 +146,56 @@
                                   :onChange update-fn}))))))))
 
 
+(def glass-request-ch (chan))
+(def glass-response-ch (chan))
+
+(defn glass
+  [cursor owner props]
+  (reify
+    om/IWillMount
+    (will-mount [_]
+      (go-loop []
+        (let [event (<! glass-request-ch)]
+          (om/update! cursor {:text (:message event) :active true})
+          (recur))))
+    om/IRender
+    (render [_]
+      (if (:active cursor)
+        (dom/div #js {:id "glass"
+                      :className "glass"}
+                 (dom/div #js {:className "glass-content"}
+                          (-> cursor :text)
+                          (dom/div nil
+                                   (dom/input #js {:type "button"
+                                                   :value "OK"
+                                                   :onClick #(do (om/update! cursor [:active] false)
+                                                                 (put! glass-response-ch {:type :action :value :ok}))})
+                                   (dom/input #js {:type "button"
+                                                   :value "Cancel"
+                                                   :onClick #(do (om/update! cursor [:active] false)
+                                                                 (put! glass-response-ch {:type :action :value :cancel}))}))))
+        (dom/div #js {:id "glass"})))))
+
+
 (defn panel
-  [state _ {{:keys [id title layout elements]} :spec ch :ch}]
+  [cursor _ {{:keys [id title layout elements]} :spec ch :ch}]
   (om/component
    (dom/div nil
-            (if-let [t (if (not= title :none) (or (:title state) title))]
-      (dom/h1 #js {:className "def-title"} t))
-    (wrap dom/div #js {:id id
-                       :className (case layout
-                                    :two-columns "two-column-panel"
-                                    "def-panel")}
-          (let [pos (if layout :below :beneath)]
-            (for [e elements :let [e' (if e (assoc e :message-position pos))]]
-              (build e' ch state)))))))
+            (if-let [t (if (not= title :none) (or (:title cursor) title))]
+              (dom/h1 #js {:className "def-title"} t))
+            (wrap dom/div #js {:id id
+                               :className (case layout
+                                            :two-columns "two-column-panel"
+                                            "def-panel")}
+                  (let [pos (if layout :below :beneath)]
+                    (for [e elements :let [e' (if e (assoc e :message-position pos))]]
+                      (build e' ch cursor)))))))
 
 
 
 (defn selectbox
-  [{:keys [value message items] :as state} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
-  (warn-if-state-missing spec state)
+  [{:keys [value message items] :as cursor} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec cursor)
   (om/component
    (with-label label
      (with-message message message-position
@@ -163,19 +203,19 @@
                              :className "def-field"
                              :value (or value "")
                              :ref (name id)
-                             :onChange (partial update! ch id state)}
+                             :onChange (partial update! ch id cursor)}
              (for [i items]
                (dom/option (clj->js i) (:value i))))))))
 
 
 (defn table
-  [{:keys [items visible selection] :as state} _ {{:keys [id label columns actions-fn] :as spec} :spec ch :ch}]
-  (warn-if-state-missing spec state)
+  [{:keys [items visible selection] :as cursor} _ {{:keys [id label columns actions-fn] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec cursor)
   (om/component
    (letfn [(update-index! [index]
              (put! ch {:type :update
                        :id id
-                       :state state
+                       :cursor cursor
                        :key :selection
                        :value #{index}}))
            (render-actions [index item]
@@ -214,7 +254,7 @@
 
 
 (defn togglelink
-  [{:keys [active disabled] :as state} _ {{:keys [id text] :as spec} :spec ch :ch}]
+  [{:keys [active disabled] :as cursor} _ {{:keys [id text] :as spec} :spec ch :ch}]
   (om/component
    (cond
     disabled
@@ -234,9 +274,9 @@
 
 
 (defn textfield
-  [{:keys [value message disabled] :as state} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
-  (warn-if-state-missing spec state)
-  (let [update-fn (partial update! ch id state)]
+  [{:keys [value message disabled] :as cursor} _ {{:keys [id label message-position] :as spec} :spec ch :ch}]
+  (warn-if-state-missing spec cursor)
+  (let [update-fn (partial update! ch id cursor)]
     (om/component
      (with-label label
        (with-message message message-position
@@ -257,9 +297,9 @@
             (dom/div #js {:className "def-title"} text))))
 
 ;; ----------------------------------------------------------------------------
-;; Keep all view channels in a global map
+;; API
 
-(def channels (atom {}))
+(def channels (atom {})) ; keep all view channels in a global map
 
 
 (defn put-view!
@@ -267,6 +307,12 @@
   (if-let [ch (get @channels view-id)]
     (put! ch message)
     (log (str "WARNING: No channel for '" view-id "' found"))))
+
+
+(defn <ask
+  [message]
+  (go (>! glass-request-ch {:type :ask :message message})
+      (:value (<! glass-response-ch))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -285,55 +331,76 @@
 
 
 (defn- validate
-  [state constraints]
-  (-> state
-      (update-in [::validation-results]
-                 #(e/update % (e/validate constraints state)))
-      (attach-messages)))
+  [state constraints path {:keys [key] :as event}]
+  (let [constraints (if path
+                      (e/sub-set constraints (conj path (:key event)))
+                      constraints)]
+    (-> state
+        (update-in [::validation-results]
+                   #(e/update % (e/validate constraints state)))
+        (attach-messages))))
 
 
 (defn- update-state
   [state path {:keys [key value parser]:or {parser identity} :as event}]
-  (let [message-path (conj path :message)
-        value-path   (conj path key)
-        [parsed ex]  (try [(parser value) nil]
-                          (catch js/Error ex
-                            [nil ex]))]
-    (if ex
-      (-> state
-          (assoc-in value-path value)
-          (assoc-in message-path "Invalid format"))
-      (assoc-in state value-path parsed))))
+  (if path 
+    (let [message-path (conj path :message)
+          value-path   (conj path key)
+          [parsed ex]  (try [(parser value) nil]
+                            (catch js/Error ex
+                              [nil ex]))]
+      (if ex
+        (-> state
+            (assoc-in value-path value)
+            (assoc-in message-path "Invalid format"))
+        (assoc-in state value-path parsed)))
+    ;; an empty path means the whole state will be replaced 
+    value))
 
 
-(defn controller
-  [state {:keys [actions parent-ch ch rules constraints] :or {rules identity} :as spec}]
+(defn- exec-action
+  [state f event ch]
+  (let [result (f state event)]
+    (if (nil? result)
+      (log "Action returned nil, which is most likely a programming error")
+      (if (satisfies? asyncimpl/Channel result)
+        (do (go (let [result (<! result)]
+                  (>! ch {:type :update
+                          :id "async"
+                          :key nil
+                          :cursor nil
+                          :value result})))
+            state)
+        result))))
+
+
+(defn- controller
+  [cursor {:keys [actions parent-ch ch rules constraints] :or {rules identity} :as spec}]
   (go-loop []
     (let [{:keys [type id] :as event} (<! ch)]
       (log (:id spec) type id)
       (case type
         :init
-        (om/transact! state rules)
+        (om/transact! cursor rules)
         :update 
-        (let [path (->> event :state om/path
-                        (drop (-> state om/path count))
-                        (vec))]
-          (om/transact! state #(-> %
+        (let [path (some->> event :cursor om/path
+                            (drop (-> cursor om/path count))
+                            (vec))]
+          (om/transact! cursor #(-> %
                                    (update-state path event)
                                    (rules)
-                                   (validate (e/sub-set constraints (conj path (:key event)))))))
+                                   (validate constraints path event))))
         :action
         (if-let [action-fn (get actions (keyword id))]
-          (om/transact! state
-                        #(-> %
-                             (action-fn event)
-                             (rules)))
+          (om/transact! cursor #(-> %
+                                    (exec-action action-fn event ch)
+                                    (rules)))
           (log (str "WARNING: No action defined for " (keyword id)))))
       (recur))))
 
 
 (defn view
-  [state owner {:keys [spec ch]}]
+  [cursor owner {:keys [spec ch]}]
   #_(prn "VIEW" (:id spec))
   (reify
     om/IInitState
@@ -345,7 +412,7 @@
     (will-mount [_]
       #_(prn "WILLMOUNT" (:id spec))
       (swap! channels assoc (:id spec) (om/get-state owner :ch))
-      (controller state (merge spec (om/get-state owner))))
+      (controller cursor (merge spec (om/get-state owner))))
     om/IWillUnmount
     (will-unmount [_]
       #_(prn "WILLUNMOUNT" (:id spec))
@@ -357,21 +424,21 @@
     om/IRenderState
     (render-state [_ {:keys [ch]}]
       (let [{:keys [id title layout elements spec-fn]} spec
-            es (or elements (-> state spec-fn as-vector))
+            es (or elements (-> cursor spec-fn as-vector))
             ch (om/get-state owner :ch)]
         #_(prn "RENDER" id (count es) layout)
         (build (sp/panel id
                          :title title
                          :layout layout
                          :elements es)
-               ch state)))))
+               ch cursor)))))
 
 
 ;; ----------------------------------------------------------------------------
 ;; Generic builder
 
 (defn build
-  [spec ch state]
+  [spec ch cursor]
   (when spec
     (let [f (case (:type spec)
               ::sp/bar        bar
@@ -385,7 +452,7 @@
               ::sp/togglelink togglelink
               ::sp/textfield  textfield
               ::sp/view       view)]
-      #_(prn (str "BUILD" (:type spec) " " (:id spec)  " " (and state (om/path state)) " " (:path spec)))
-      (om/build f (get-in state (:path spec)) {:react-key (:id spec)
+      #_(prn (str "BUILD" (:type spec) " " (:id spec)  " " (and cursor (om/path cursor)) " " (:path spec)))
+      (om/build f (get-in cursor (:path spec)) {:react-key (:id spec)
                                                :opts {:spec spec :ch ch}}))))
 
