@@ -1,7 +1,8 @@
 (ns zackzack.demo.addressbook
-  (:require [examine.constraints :as c]
+  (:require [cljs.core.async :refer [<!]]
+            [cljs-http.client :as http]
+            [examine.constraints :as c]
             [examine.core :as e]
-            [ajax.core :refer [GET POST]]
             [zackzack.components :refer [put-view! <ask]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.specs :refer [action-link button checkbox column
@@ -10,16 +11,6 @@
   (:require-macros [examine.macros :refer [defvalidator]]
                    [cljs.core.async.macros :refer [go go-loop]]))
 
-
-
-;; Remote access
-;; ----------------------------------------------------------------------------
-
-(defn load-addresses
-  []
-  (GET "/addresses" {:handler #(put-view! "addressbook" {:type :action
-                                                         :id "addresses"
-                                                         :payload %})}))
 
 
 ;; ============================================================================
@@ -151,16 +142,12 @@
           state))))
 
 
-(defn addressbook-reload
+(defn <addressbook-reload
   [state event]
-  (load-addresses)
-  state)
-
-
-(defn addressbook-replace
-  [state {:keys [payload]}]
-  (-> state
-      (assoc-in [:addresses :items] payload)))
+  (go (if (= :ok (<! (<ask "This will undo all your local changes. Are you sure?")))
+        (let [addresses (:body (<! (http/get "/addresses")))]
+          (assoc-in state [:addresses :items] addresses))
+        state)))
 
 
 ;; ----------------------------------------------------------------------------
@@ -196,7 +183,6 @@
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    <addressbook-delete
-                  :reload    addressbook-reload
-                  :addresses addressbook-replace}
+                  :reload    <addressbook-reload}
         :rules addressbook-rules))
 

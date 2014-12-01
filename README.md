@@ -27,16 +27,6 @@ drastically simpler enterprise-style UI development. This is how I
 like the code for boring UIs to look alike:
 
 ```clojure
-;; Remote access
-;; ----------------------------------------------------------------------------
-
-(defn load-addresses
-  []
-  (GET "/addresses" {:handler #(put-view! "addressbook" {:type :action
-                                                         :id "addresses"
-                                                         :payload %})}))
-
-
 ;; ============================================================================
 ;; Address Details
 
@@ -166,16 +156,12 @@ like the code for boring UIs to look alike:
           state))))
 
 
-(defn addressbook-reload
+(defn <addressbook-reload
   [state event]
-  (load-addresses)
-  state)
-
-
-(defn addressbook-replace
-  [state {:keys [payload]}]
-  (-> state
-      (assoc-in [:addresses :items] payload)))
+  (go (if (= :ok (<! (<ask "This will undo all your local changes. Are you sure?")))
+        (let [addresses (:body (<! (http/get "/addresses")))]
+          (assoc-in state [:addresses :items] addresses))
+        state)))
 
 
 ;; ----------------------------------------------------------------------------
@@ -211,8 +197,7 @@ like the code for boring UIs to look alike:
         :actions {:add       addressbook-add
                   :edit      addressbook-edit!
                   :delete    <addressbook-delete
-                  :reload    addressbook-reload
-                  :addresses addressbook-replace}
+                  :reload    <addressbook-reload}
         :rules addressbook-rules))
 ```
 
@@ -228,7 +213,9 @@ to create and understand a UI like this.
 
 Here are some points that I have to make up my mind about:
 
-Are there any general rules that determine the process+channel topology?
+In my setup each *view* gets its own channel, and all channels are
+registered in a central map. Are there any general rules that
+determine the process+channel topology?
 
 How can input focus be controlled?  The decision, where to take the
 focus to, could be part of an action or, more general, in an
@@ -246,7 +233,7 @@ a component is part of global application state. This makes possible
 to directly influence this data in action functions that are not part
 of the component to be controlled.
 
-A *view* bundles the specification on contents, a channel, actions, 
+A *view* bundles the specification off contents, a channel, actions, 
 rules and a validator.
 
 Views and view contents is specified as data using a bunch of
@@ -262,23 +249,25 @@ submitted by JS event listeners. Any user input is routed as
 updated immediately with the result of a field specific *parser*
 function [string -> anything] application.
 
-After processing an `:update`, *validation* with respect to the updated
-field is applied (currently not fully implemented). This results in a
-`:message` value stored in the fields map.
+After processing an `:update`, *validation* with respect to the
+updated field is applied. This results in an update of all `:message`
+values stored in the state maps of input fields.
 
 *Actions* (the stuff that happens for example upon button clicks) are
 triggered by `:action` events and should ideally be pure functions of
-the form [state event -> state]. If they communicate with a server or
-another component they would either use their own or a foreign
-components channel, respectively.  In case of accessing channels
-action functions are no longer pure, so should be named with a
-trailing !.
+the form [state event -> (U state channel)]. If they communicate with
+another component they use the foreign components channel with
+`put-view!`. They usually return the new state of the view (see also
+Remote Communication).
 
-*Remote communication* is done asynchronously. Upon receipt of the
-response the callback puts an `:action` event to the components
-channel, where the content of the response is held as `:payload`
-value. Thus, payload processing takes the same way as action
-processing.
+*Remote communication* is done asynchronously. An action body can be
+wrapped in a `go` block to access a remote service operation. In this
+case, the action returns a channel. When this channel emits a message
+it is used as new view state in an `:update` message processed by the
+responsible view. (This is a bit dangerous, because the user might
+apply changes somewhere else which are then overwritten by the
+message. The piece of state that gets updated must be narrowed,
+alternatively the UI has to be blocked.)
 
 After processing of an `:update` or `:action` event a *rules* function
 [state -> state] is called that ensures that invariants regarding
@@ -286,7 +275,7 @@ the components state are re-established.
 
 To enable *communication among controller processes* each view has its
 own input channel which is created when the view components state is
-initialised (IInitState). Upon mounting the chnannel is registered
+initialised (IInitState). Upon mounting, the channel is registered
 under the views id in a global map. The channel is removed from this
 map when it is unmounted. A view used as child of a parent view
 contains the channel of its parent in the `:parent-ch` entry in its
@@ -296,7 +285,9 @@ arbitrary action function.
 
 
 ## TODOs
-* Component access to global data like user, roles, rights
+
+* Component access to global data like user, roles, rights (can this
+  be done through Om's global, immutable shared state?)
 * Formatting / parsing of values
 * Controlling input focus
 
@@ -305,6 +296,11 @@ arbitrary action function.
 
 Clone this repo. Make sure you're on Java 1.7 or higher and have at
 least Leiningen 2.5 installed.
+
+### To start the backend
+
+* Compile `zackzack.backend` namespace in the REPL and evaluate
+  `(start!)`.
 
 ### To enter interactive development
 
@@ -331,15 +327,17 @@ least Leiningen 2.5 installed.
 
 `lein do clean, jar` or execute `./produce.sh`.
 
-You'll find the JS build results in resources/public.
-Use the index.html to start the frontend.
+You'll find the JS build results in resources/public.  Use the
+index.html to start the frontend without the backend. If the backend
+is started you can use http://localhost:8080/index.html.
 
 ### To use cljsbuild auto and develop without REPL connection
 
 `lein with-profile auto do, cljsbuild auto` or execute `./auto.sh`.
 
-You'll find the JS build results in resources/public.
-Use the testindex.html to start the frontend.
+You'll find the JS build results in resources/public.  Use the
+testindex.html to start the frontend without the backend. If the
+backend is started you can use http://localhost:8080/testindex.html.
 
 
 ## License
