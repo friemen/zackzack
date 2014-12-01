@@ -213,7 +213,7 @@ to create and understand a UI like this.
 
 Here are some points that I have to make up my mind about:
 
-In my setup each *view* gets its own channel, and all channels are
+In my setup each view gets its own channel, and all channels are
 registered in a central map. Are there any general rules that
 determine the process+channel topology?
 
@@ -233,8 +233,8 @@ a component is part of global application state. This makes possible
 to directly influence this data in action functions that are not part
 of the component to be controlled.
 
-A *view* bundles the specification off contents, a channel, actions, 
-rules and a validator.
+A *view* bundles the specification of visual contents, actions, 
+rules and a validation constraints.
 
 Views and view contents is specified as data using a bunch of
 functions that create nested maps (see zackzack.specs namespace).
@@ -256,7 +256,7 @@ values stored in the state maps of input fields.
 *Actions* (the stuff that happens for example upon button clicks) are
 triggered by `:action` events and should ideally be pure functions of
 the form [state event -> (U state channel)]. If they communicate with
-another component they use the foreign components channel with
+another component they use the foreign components channel via
 `put-view!`. They usually return the new state of the view (see also
 Remote Communication).
 
@@ -300,7 +300,7 @@ least Leiningen 2.5 installed.
 ### To start the backend
 
 * Compile `zackzack.backend` namespace in the REPL and evaluate
-  `(start!)`.
+  `(start!)`. The server will be available at http://localhost:8080/.
 
 ### To enter interactive development
 
