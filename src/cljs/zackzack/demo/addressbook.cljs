@@ -62,9 +62,9 @@
 (defn details-edit
   [state {:keys [address index]}]
   (-> state
-          (assoc-in  [:edit-index] index)
-          (update-all :value fields address)
-          (update-all :message fields nil)))
+      (assoc-in  [:edit-index] index)
+      (update-all :value fields address)
+      (update-all :message fields nil)))
 
 
 ;; ----------------------------------------------------------------------------
@@ -151,7 +151,7 @@
 
 
 ;; ----------------------------------------------------------------------------
-;; Rules are represented by a sole function [state -> state]
+;; Rules are represented by one function [state -> state]
 
 (defn addressbook-rules
   [state]

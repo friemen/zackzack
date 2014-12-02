@@ -3,9 +3,18 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom]
             [cljs.core.async :refer [chan]]
+            [weasel.repl :as repl]
             [zackzack.components :as z]
             [zackzack.demo.frame :refer [frame-view]]
             [zackzack.demo.addressbook :refer [addressbook-view]]))
+
+
+(defn browser-connect
+  "Connects as client to a piggiebacked Cljs REPL.
+  Called by resources/public/testindex.html."
+  []
+  (if-not (repl/alive?)
+    (repl/connect "ws://localhost:9001")))
 
 
 
@@ -60,3 +69,5 @@
             :opts {:spec (frame-view)}}))
 
 (refresh)
+
+

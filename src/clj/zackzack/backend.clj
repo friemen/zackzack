@@ -1,12 +1,19 @@
 (ns zackzack.backend
-  (:require [org.httpkit.server :as httpkit]
+  (:require [clojure.java.io :as io]
+            [org.httpkit.server :as httpkit]
             [compojure.handler :as handler]
-            [ring.util.response :refer [redirect response]]
-            [hiccup.page :refer [html5]]
-            [hiccup.form :as f]
             [compojure.core :refer [defroutes GET POST]]
             [compojure.route :as route]
-            [ring.middleware.transit :refer [wrap-transit-response wrap-transit-body]]))
+            [ring.util.response :refer [redirect response]]
+            [ring.middleware.transit :refer [wrap-transit-response wrap-transit-body]]
+            [weasel.repl.websocket]
+            [cemerick.piggieback])
+  (:gen-class :main true))
+
+
+(defn cljs-repl
+  []
+  (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env)))
 
 ;;-------------------------------------------------------------------
 ;; default data
@@ -19,17 +26,20 @@
                           (map (juxt :id identity))
                           (into {}))))
 
-
-
 ;;-------------------------------------------------------------------
 ;; routing
 
-(defroutes app
+(defroutes routes
   (GET "/" [] (redirect "index.html"))
   (GET "/addresses" [] {:status 200 :body (-> @addresses vals vec)})
   (route/resources "/")
   (route/not-found "Not found"))
 
+
+(def app (-> #'routes
+             wrap-transit-response
+             wrap-transit-body
+             handler/site))
 
 ;; -------------------------------------------------------------------
 ;; http server start/stop infrastructure
@@ -50,10 +60,10 @@
   []
   (stop!)
   (reset! http-server
-          (httpkit/run-server (-> #'app
-                                  wrap-transit-response
-                                  wrap-transit-body
-                                  handler/site)
-                              {:port 8080}))
+          (httpkit/run-server app {:port 8080}))
   :started) 
 
+
+(defn -main
+  [& args]
+  (start!))

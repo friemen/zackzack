@@ -16,14 +16,20 @@
                  [om "0.7.1"]
                  [cljs-http "0.1.21"]
                  [examine "1.2.0"]
+                 [weasel "0.4.2"]
                  ;; clj deps
                  [ring "1.3.1"]
                  [ring-transit "0.1.2"]
                  [http-kit "2.1.19"]
                  [compojure "1.2.1"]]
 
+  :main zackzack.backend
+  :uberjar-name "zackzack.jar"
+  :ring {:handler zackzack.backend/app
+         :port 8080}
   
-  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
+  :plugins [[lein-ring "0.8.13"]
+            [lein-cljsbuild "1.0.4-SNAPSHOT"]
             [com.cemerick/clojurescript.test "0.3.1"]]
 
   :hooks [leiningen.cljsbuild]
@@ -41,21 +47,11 @@
   
   :profiles
   {:dev {:clean-targets ["out" :target-path]
-         :source-paths ["dev-resources/tools/http" "dev-resources/tools/repl"]
          :test-paths ["test/clj" "test/cljs"]
          :resource-paths ["resources"]
-         :dependencies [[ring "1.3.1"]
-                        [compojure "1.2.1"]
-                        [enlive "1.1.5"]]
-         :plugins [[com.cemerick/austin "0.1.5"]]
-        
-         :injections [(require '[ring.server :as http :refer [run]]
-                               'cemerick.austin.repls)
-                      (defn browser-repl []
-                        (cemerick.austin.repls/cljs-repl (reset! cemerick.austin.repls/browser-repl-env
-                                                                 (cemerick.austin/repl-env))))]
+         :dependencies [[com.cemerick/piggieback "0.1.3"]]
          :cljsbuild {:builds {:zackzack
-                              {:source-paths ["src/cljs" "test/cljs" "dev-resources/tools/repl"]
+                              {:source-paths ["src/cljs" "test/cljs"]
                                :compiler
                                {:output-to "resources/public/js/zackzack.js"
                                 :output-dir "resources/public/js"
@@ -72,4 +68,6 @@
                                 :output-dir "resources/public/js"
                                 :source-map "resources/public/js/zackzack.js.map"
                                 :optimizations :none
-                                :pretty-print false}}}}}})
+                                :pretty-print false}}}}}
+   :uberjar {:omit-source true
+             :aot :all}})

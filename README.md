@@ -297,23 +297,19 @@ arbitrary action function.
 Clone this repo. Make sure you're on Java 1.7 or higher and have at
 least Leiningen 2.5 installed.
 
-### To start the backend
-
-* Compile `zackzack.backend` namespace in the REPL and evaluate
-  `(start!)`. The server will be available at http://localhost:8080/.
 
 ### To enter interactive development
 
 * If you have just worked with `cljsbuild auto` and switch to
   interactive mode make sure to delete resources/public/js before
-  starting the REPL.
-* Create a REPL session.
-* `(run)` starts an embedded Jetty web server.
-* `(browser-repl)` starts a browser based ClojureScript REPL.
-* Use the URL displayed by browser-repl and connect with the browser
-  to it.
-* In a different tab in the same browser instance use
-  http://localhost:3000 to request index.html.
+  starting the REPL. You can use `lein cljsbuild clean`.
+* Create a REPL session, load `zackzack.backend` namespace.
+* `(start!)` starts http-kit web server.
+* `(cljs-repl)` starts a browser based ClojureScript REPL. Wait for an
+  output like `<< started Weasel server on ws://127.0.0.1:9001 >>`.
+  Now the REPL is ready for the browser to connect.
+* Load the page http://localhost:8080/testindex.html, it will connect
+  to the waiting REPL.
 * Open a cljs source file. Re-evaluate some code. If you changed data,
   not just functions, then you also have to re-evaluate the `om/root`
   expression (I wrapped it in a function, so `(refresh)` does the
@@ -323,15 +319,7 @@ least Leiningen 2.5 installed.
   your prior evaluations will be gone.
 
 
-### To produce something to publish
-
-`lein do clean, jar` or execute `./produce.sh`.
-
-You'll find the JS build results in resources/public.  Use the
-index.html to start the frontend without the backend. If the backend
-is started you can use http://localhost:8080/index.html.
-
-### To use cljsbuild auto and develop without REPL connection
+### To use cljsbuild auto and develop Cljs without REPL connection
 
 `lein with-profile auto do, cljsbuild auto` or execute `./auto.sh`.
 
@@ -340,8 +328,29 @@ testindex.html to start the frontend without the backend. If the
 backend is started you can use http://localhost:8080/testindex.html.
 
 
+### To start the backend from a terminal
+
+`lein ring server` will start a process listening on http://localhost:8080/.
+
+
+### To produce a Cljs frontend to publish
+
+`lein do clean, jar` or execute `./produce.sh`.
+
+You'll find the JS build results in resources/public.  Use the
+index.html to start the frontend without the backend. If the backend
+is started you can use http://localhost:8080/index.html.
+
+
+### To produce an Uberjar
+
+`lein uberjar` will create a self-contained Jar that can be
+run using `java -jar target/zackzack.jar` and starts a web server
+waiting on http://localhost:8080/.
+
+
 ## License
 
 Copyright © 2014 F.Riemenschneider
 
-Distributed under the Eclipse Public License either version 1.0.
+Distributed under the Eclipse Public License version 1.0.
