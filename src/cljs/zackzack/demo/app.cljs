@@ -23,8 +23,9 @@
 
 (def state-ref
   (atom  {:active nil
-          :glass {:active false
-                  :text "Message"} 
+          :confirm {:active false
+                    :text "Message"}
+          :message {:text nil}
           :bar {:links {:addressbook
                         {:disabled false
                          :active false}

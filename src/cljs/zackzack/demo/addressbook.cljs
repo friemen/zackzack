@@ -3,7 +3,7 @@
             [cljs-http.client :as http]
             [examine.constraints :as c]
             [examine.core :as e]
-            [zackzack.components :refer [put-view! <ask]]
+            [zackzack.components :refer [put-view! <ask Message]]
             [zackzack.utils :refer [get-all update-all remove-selected add-or-replace]]
             [zackzack.specs :refer [action-link button checkbox column
                                     datepicker panel
@@ -100,9 +100,9 @@
                            (datepicker "birthday")])
          (panel "actions" :elements
                 [(button "add" :text "Add Address") (button "reset")])]
-        :actions {:add       details-add!
-                  :edit      details-edit
-                  :reset     details-reset}
+        :actions {:add     details-add!
+                  :edit    details-edit
+                  :reset   details-reset}
         :rules addressdetails-rules
         :constraints address-constraints))
 
@@ -144,9 +144,11 @@
 
 (defn <addressbook-reload
   [state event]
-  (go (if (= :ok (<! (<ask "This will undo all your local changes. Are you sure?")))
-        (let [addresses (:body (<! (http/get "/addresses")))]
-          (assoc-in state [:addresses :items] addresses))
+  (go (if (= :ok (<! (<ask "You will loose all your local changes. Are you sure?")))
+        (let [{s :status addresses :body} (<! (http/get "/addresses"))]
+          (if (= 200 s)
+            (assoc-in state [:addresses :items] addresses)
+            (Message. "Error loading addresses")))
         state)))
 
 

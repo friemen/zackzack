@@ -76,9 +76,9 @@ like the code for boring UIs to look alike:
 (defn details-edit
   [state {:keys [address index]}]
   (-> state
-          (assoc-in  [:edit-index] index)
-          (update-all :value fields address)
-          (update-all :message fields nil)))
+      (assoc-in  [:edit-index] index)
+      (update-all :value fields address)
+      (update-all :message fields nil)))
 
 
 ;; ----------------------------------------------------------------------------
@@ -114,9 +114,9 @@ like the code for boring UIs to look alike:
                            (datepicker "birthday")])
          (panel "actions" :elements
                 [(button "add" :text "Add Address") (button "reset")])]
-        :actions {:add       details-add!
-                  :edit      details-edit
-                  :reset     details-reset}
+        :actions {:add     details-add!
+                  :edit    details-edit
+                  :reset   details-reset}
         :rules addressdetails-rules
         :constraints address-constraints))
 
@@ -158,14 +158,16 @@ like the code for boring UIs to look alike:
 
 (defn <addressbook-reload
   [state event]
-  (go (if (= :ok (<! (<ask "This will undo all your local changes. Are you sure?")))
-        (let [addresses (:body (<! (http/get "/addresses")))]
-          (assoc-in state [:addresses :items] addresses))
+  (go (if (= :ok (<! (<ask "You will loose all your local changes. Are you sure?")))
+        (let [{s :status addresses :body} (<! (http/get "/addresses"))]
+          (if (= 200 s)
+            (assoc-in state [:addresses :items] addresses)
+            (Message. "Error loading addresses")))
         state)))
 
 
 ;; ----------------------------------------------------------------------------
-;; Rules are represented by a sole function [state -> state]
+;; Rules are represented by one function [state -> state]
 
 (defn addressbook-rules
   [state]
@@ -234,10 +236,12 @@ to directly influence this data in action functions that are not part
 of the component to be controlled.
 
 A *view* bundles the specification of visual contents, actions, 
-rules and a validation constraints.
+rules and validation constraints.
 
-Views and view contents is specified as data using a bunch of
-functions that create nested maps (see zackzack.specs namespace).
+View contents is specified as data using a bunch of functions that
+create nested maps (see
+[zackzack.specs](https://github.com/friemen/zackzack/blob/master/src/cljs/zackzack/specs.cljs)
+namespace).
 
 There is a generic *view component* that starts a generic CSP-style
 controller process and builds components by interpretation of the
@@ -253,19 +257,23 @@ After processing an `:update`, *validation* with respect to the
 updated field is applied. This results in an update of all `:message`
 values stored in the state maps of input fields.
 
+If an input field loses the input focus a formatter is applied to show
+the user input properly formatted (not yet implemented).
+
 *Actions* (the stuff that happens for example upon button clicks) are
 triggered by `:action` events and should ideally be pure functions of
-the form [state event -> (U state channel)]. If they communicate with
-another component they use the foreign components channel via
-`put-view!`. They usually return the new state of the view (see also
-Remote Communication).
+the form [state event -> (U state channel message)]. If they
+communicate with another component they use the foreign components
+channel via `put-view!`. They usually return the new state of the
+view, but can alternatively return a channel (see also Remote
+Communication) or an error message.
 
 *Remote communication* is done asynchronously. An action body can be
 wrapped in a `go` block to access a remote service operation. In this
 case, the action returns a channel. When this channel emits a message
 it is used as new view state in an `:update` message processed by the
-responsible view. (This is a bit dangerous, because the user might
-apply changes somewhere else which are then overwritten by the
+responsible view. (This is a bit dangerous, because meantime the user
+might apply changes somewhere else which are then overwritten by the
 message. The piece of state that gets updated must be narrowed,
 alternatively the UI has to be blocked.)
 

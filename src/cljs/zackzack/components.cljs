@@ -4,7 +4,7 @@
   (:require [cljs.core.async.impl.protocols :as asyncimpl]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cljs.core.async :refer [put! chan <!]]
+            [cljs.core.async :refer [put! chan <! >!]]
             [examine.core :as e]
             [zackzack.utils :refer [log as-vector]]
             [zackzack.specs :as sp]))
@@ -70,14 +70,30 @@
 
 (declare view)
 (declare build)
-(declare glass)
+(declare confirmation)
 
+(def app-error-ch (chan))
 
-(defn app [cursor owner {:keys [spec]}]
-  (om/component
-   (dom/div nil
-            (build spec nil cursor)
-            (om/build glass (:glass cursor)))))
+(defrecord Message [text])
+
+(defn app [{:keys [message confirm] :as cursor} owner {:keys [spec]}]
+  (reify
+    om/IWillMount
+    (will-mount [_]
+      (go-loop []
+          (let [msg (<! app-error-ch)]
+            (om/update! cursor :message msg))
+        (recur)))
+    om/IRender
+    (render [_]
+      (dom/div nil
+               (if (:text message)
+                 (dom/div #js {:className "global-message"
+                               :onClick #(om/update! cursor :message (Message. nil))}
+                          (dom/div #js {:className "global-message-content"}
+                                   (:text message))))
+               (build spec nil cursor)
+               (om/build confirmation confirm)))))
 
 
 (defn bar
@@ -118,6 +134,37 @@
                                             :value (-> % .-target .-checked)})})))))
 
 
+(def confirm-request-ch (chan))
+(def confirm-response-ch (chan))
+
+(defn confirmation
+  [cursor owner props]
+  (reify
+    om/IWillMount
+    (will-mount [_]
+      (go-loop []
+        (let [event (<! confirm-request-ch)]
+          (om/update! cursor {:text (:message event) :active true})
+          (recur))))
+    om/IRender
+    (render [_]
+      (if (:active cursor)
+        (dom/div #js {:id "glass"
+                      :className "glass"}
+                 (dom/div #js {:className "glass-content"}
+                          (-> cursor :text)
+                          (dom/div nil
+                                   (dom/input #js {:type "button"
+                                                   :value "OK"
+                                                   :onClick #(do (om/update! cursor [:active] false)
+                                                                 (put! confirm-response-ch {:type :action :value :ok}))})
+                                   (dom/input #js {:type "button"
+                                                   :value "Cancel"
+                                                   :onClick #(do (om/update! cursor [:active] false)
+                                                                 (put! confirm-response-ch {:type :action :value :cancel}))}))))
+        (dom/div #js {:id "glass"})))))
+
+
 (defn datepicker
   [cursor owner {:keys [spec ch]}]
   (let [update-fn (partial update! ch (:id spec) cursor)]
@@ -135,46 +182,15 @@
         (let [{:keys [message disabled value]} cursor
               {:keys [id label message-position]} spec]
           (with-label label
-                (with-message message message-position
-                  (dom/input #js {:className "def-field"
-                                  :type "text"
-                                  :value (or value "")
-                                  :disabled disabled
-                                  :id id
-                                  :ref (name id)
-                                  :onBlur update-fn
-                                  :onChange update-fn}))))))))
-
-
-(def glass-request-ch (chan))
-(def glass-response-ch (chan))
-
-(defn glass
-  [cursor owner props]
-  (reify
-    om/IWillMount
-    (will-mount [_]
-      (go-loop []
-        (let [event (<! glass-request-ch)]
-          (om/update! cursor {:text (:message event) :active true})
-          (recur))))
-    om/IRender
-    (render [_]
-      (if (:active cursor)
-        (dom/div #js {:id "glass"
-                      :className "glass"}
-                 (dom/div #js {:className "glass-content"}
-                          (-> cursor :text)
-                          (dom/div nil
-                                   (dom/input #js {:type "button"
-                                                   :value "OK"
-                                                   :onClick #(do (om/update! cursor [:active] false)
-                                                                 (put! glass-response-ch {:type :action :value :ok}))})
-                                   (dom/input #js {:type "button"
-                                                   :value "Cancel"
-                                                   :onClick #(do (om/update! cursor [:active] false)
-                                                                 (put! glass-response-ch {:type :action :value :cancel}))}))))
-        (dom/div #js {:id "glass"})))))
+            (with-message message message-position
+              (dom/input #js {:className "def-field"
+                              :type "text"
+                              :value (or value "")
+                              :disabled disabled
+                              :id id
+                              :ref (name id)
+                              :onBlur update-fn
+                              :onChange update-fn}))))))))
 
 
 (defn panel
@@ -311,8 +327,8 @@
 
 (defn <ask
   [message]
-  (go (>! glass-request-ch {:type :ask :message message})
-      (:value (<! glass-response-ch))))
+  (go (>! confirm-request-ch {:type :ask :message message})
+      (:value (<! confirm-response-ch))))
 
 
 ;; ----------------------------------------------------------------------------
@@ -361,17 +377,27 @@
 (defn- exec-action
   [state f event ch]
   (let [result (f state event)]
-    (if (nil? result)
-      (log "Action returned nil, which is most likely a programming error")
-      (if (satisfies? asyncimpl/Channel result)
-        (do (go (let [result (<! result)]
-                  (>! ch {:type :update
-                          :id "async"
-                          :key nil
-                          :cursor nil
-                          :value result})))
-            state)
-        result))))
+    (cond
+     (nil? result)
+     (do (log "Action returned nil, which is most likely a programming error")
+         (put! app-error-ch (Message. "Action returned nil!"))
+         state)
+     (satisfies? asyncimpl/Channel result)
+     (do (go (let [result (<! result)]
+               (if (instance? Message result)
+                 (>! app-error-ch result)
+                 (do (>! app-error-ch (Message. nil))
+                     (>! ch {:type :update
+                             :id "async"
+                             :key nil
+                             :cursor nil
+                             :value result})))))
+         state)
+     (instance? Message result)
+     (do (put! app-error-ch result)
+         state)
+     :else (do (put! app-error-ch (Message. nil))
+               result))))
 
 
 (defn- controller
