@@ -23,8 +23,11 @@ like atoms and pure functions, perhaps augmented with access to
 channels, if necessary.
 
 My hope is to show how the combination of Om and core.async enables
-drastically simpler enterprise-style UI development. This is how I
-like the code for boring UIs to look alike:
+drastically simpler enterprise-style UI development.
+
+## Example
+
+This is how I like the code for boring UIs to look alike:
 
 ```clojure
 ;; ============================================================================
