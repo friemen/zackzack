@@ -117,7 +117,6 @@
 
 (defn addressbook-add
   [state {:keys [address index]}]
-  (prn index address)
   (update-in state [:addresses :items] add-or-replace index address))
 
 

@@ -134,7 +134,6 @@ This is how I like the code for boring UIs to look alike:
 
 (defn addressbook-add
   [state {:keys [address index]}]
-  (prn index address)
   (update-in state [:addresses :items] add-or-replace index address))
 
 
