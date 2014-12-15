@@ -312,7 +312,7 @@ least Leiningen 2.5 installed.
 
 * If you have just worked with `cljsbuild auto` and switch to
   interactive mode make sure to delete resources/public/js before
-  starting the REPL. You can use `lein cljsbuild clean`.
+  starting the REPL.
 * Create a REPL session, load `zackzack.backend` namespace.
 * `(start!)` starts http-kit web server.
 * `(cljs-repl)` starts a browser based ClojureScript REPL. Wait for an
@@ -323,10 +323,24 @@ least Leiningen 2.5 installed.
 * Open a cljs source file. Re-evaluate some code. If you changed data,
   not just functions, then you also have to re-evaluate the `om/root`
   expression (I wrapped it in a function, so `(refresh)` does the
-  trick if you changed the views layout).
+  trick if you changed the views layout, to improve interactivity see
+  Emacs/CIDER tip below).
 * You should be able to see the effect in the browser *without*
   reloading anything. In fact, if you reload in the browser all
   your prior evaluations will be gone.
+
+
+With Emacs/CIDER you can trigger a `(refresh)` by sending a form to
+a REPL using `cider-interactive-eval`:
+
+```
+(defun refresh-zackzack ()
+  (interactive)
+  (cider-interactive-eval "(zackzack.demo.app/refresh)"))
+```
+
+If you bind this function to a keyboard shortcut you can redraw your
+browser by just one keystroke.
 
 
 ### To use cljsbuild auto and develop Cljs without REPL connection

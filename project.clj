@@ -8,11 +8,10 @@
   
   :source-paths ["src/clj" "src/cljs"]
   :test-paths ["test/clj" "test/cljs"]
-  
   :dependencies [[org.clojure/clojure "1.6.0"]
                  ;; cljs deps
-                 [org.clojure/clojurescript "0.0-2311"]
-                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
+                 [org.clojure/clojurescript "0.0-2411"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.7.1"]
                  [cljs-http "0.1.21"]
                  [examine "1.2.0"]
