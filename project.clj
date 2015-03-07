@@ -13,10 +13,12 @@
                  [org.clojure/clojurescript "0.0-3030"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.omcljs/om "0.8.8"]
-                 [cljs-http "0.1.26"]
+                 [cljs-http "0.1.27"]
                  [examine "1.2.0"]
                  [weasel "0.6.0"]
                  ;; clj deps
+                 [org.clojure/tools.nrepl "0.2.7"]
+                 [com.cemerick/piggieback "0.1.6-SNAPSHOT"]
                  [ring "1.3.2"]
                  [ring-transit "0.1.3"]
                  [http-kit "2.1.19"]
@@ -48,7 +50,6 @@
   {:dev {:clean-targets ["out" :target-path]
          :test-paths ["test/clj" "test/cljs"]
          :resource-paths ["resources"]
-         :dependencies [[com.cemerick/piggieback "0.1.6-SNAPSHOT"]]
          :cljsbuild {:builds {:zackzack
                               {:source-paths ["src/cljs" "test/cljs"]
                                :compiler
