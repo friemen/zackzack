@@ -32,6 +32,8 @@
                         :gallery
                         {:disabled false
                          :active false}}}
+          :playground {:firstname {:value ""}
+                       :lastname {:value ""}}
           :gallery {:text {:value ""}
                     :select  {:value "One"
                               :items [{:value "One"}

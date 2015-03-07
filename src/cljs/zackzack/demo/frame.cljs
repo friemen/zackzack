@@ -1,7 +1,8 @@
 (ns zackzack.demo.frame
   (:require [cljs.core.async :refer [put! chan]]
-            [zackzack.specs :refer [bar view togglelink]]
+            [zackzack.specs :refer [bar view togglelink textfield button]]
             [zackzack.demo.addressbook :refer [addressbook-view]]
+            [zackzack.demo.playground :refer [playground-view]]
             [zackzack.demo.gallery :refer [gallery-view]]))
 
 
@@ -16,21 +17,22 @@
       state)))
 
 
-
 (defn frame-view
   []
   (view "frame"
-        :path nil
-        :title nil
+        :path nil :title nil
         :spec-fn
         (fn [state]
           (let [active-view-id (-> state :active)]            
             [(bar "bar" :links [(togglelink "addressbook")
-                                (togglelink "gallery")])
+                                (togglelink "gallery")
+                                (togglelink "playground")])
              (case active-view-id
                "addressbook" (addressbook-view "addressbook")
                "gallery"     (gallery-view)
+               "playground"  (playground-view)
                nil)]))
         :actions {:addressbook switch-view
-                  :gallery     switch-view}))
+                  :gallery     switch-view
+                  :playground  switch-view}))
 
