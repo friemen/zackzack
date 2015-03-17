@@ -13,7 +13,10 @@
 
 (defn cljs-repl
   []
-  (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env)))
+  (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env
+                                            :ip "0.0.0.0"
+                                            :port 9001)))
+
 
 ;;-------------------------------------------------------------------
 ;; default data

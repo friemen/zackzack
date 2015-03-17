@@ -315,7 +315,7 @@ least Leiningen 2.5 installed.
   starting the REPL.
 * Create a REPL session, load `zackzack.backend` namespace.
 * `(start!)` starts http-kit web server.
-* `(cljs-repl)` starts a browser based ClojureScript REPL. Wait for an
+* `(cljs-repl)` starts a browser-connected ClojureScript REPL. Wait for an
   output like `<< started Weasel server on ws://127.0.0.1:9001 >>`.
   Now the REPL is ready for the browser to connect.
 * Load the page http://localhost:8080/testindex.html, it will connect
