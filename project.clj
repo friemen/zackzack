@@ -31,7 +31,7 @@
   
   :plugins [[lein-ring "0.8.13"]
             [lein-cljsbuild "1.0.5"]
-            [com.cemerick/clojurescript.test "0.3.1"]]
+            [com.cemerick/clojurescript.test "0.3.3"]]
 
   :hooks [leiningen.cljsbuild]
 
@@ -43,7 +43,11 @@
                          :externs ["resources/public/jslib/moment-2.8.3.min.js"
                                    "resources/public/jslib/pikaday-1.3.0.min.js"]
                          :optimizations :advanced
-                         :pretty-print false}}}}
+                         :pretty-print true}}}
+              :test-commands {"unit-tests"
+                              ["xvfb-run" "-a" "slimerjs" :runner
+                               "window.literal_js_was_evaluated=true"
+                               "resources/public/js/zackzack.js"]}}
   
   :profiles
   {:dev {:clean-targets ["out" :target-path]
@@ -59,9 +63,7 @@
                                 :source-map "resources/public/js/zackzack.js.map"
                                 :source-map-path "js/zackzack.js.map"
                                 :optimizations :whitespace
-                                :pretty-print true}}}
-                     :test-commands {"phantomjs"
-                                     ["phantomjs" :runner "resources/public/js/zackzack.js"]}}}
+                                :pretty-print true}}}}}
    
    :auto {:cljsbuild {:builds {:zackzack
                               {:source-paths ["src/cljs" "test/cljs"]
