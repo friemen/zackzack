@@ -280,8 +280,7 @@
     (dom/span #js {:id id
                    :className "def-togglelink-span def-togglelink-span-active"} text)
     :else
-    (dom/span #js {:id id
-                   :className "def-togglelink-span"}
+    (dom/span #js {:className "def-togglelink-span"}
               (dom/a #js {:id id
                           :className "def-togglelink"
                           :href "#"
