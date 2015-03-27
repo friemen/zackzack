@@ -373,8 +373,29 @@ run using `java -jar target/zackzack.jar` and starts a web server
 waiting on http://localhost:8080/.
 
 
+### To execute automated tests
+
+Clojure based tests use Selenium webdriver with Firefox.
+Unfortunately, ClojureScript tests are not properly executed due to a
+bug either in my project.clj or in one of the ClojureScript deps.
+
+Give it a try with `lein test`.
+
+
+### To run it in a Docker container
+
+Suppose your working dir is the project root dir and you have an
+Ubuntu-based Docker image `zackzack` with just openjdk-7-jdk
+installed, then the following command will create and run a fresh
+container:
+
+`sudo docker run -d -p 127.0.0.1:80:8080 -v $(pwd):/root zackzack
+java -jar /root/zackzack.jar`
+
+From the browser you reach this instance with http://localhost.
+
 ## License
 
-Copyright © 2014 F.Riemenschneider
+Copyright © 2014, 2015 F.Riemenschneider
 
 Distributed under the Eclipse Public License version 1.0.

@@ -22,7 +22,8 @@
                  [ring "1.3.2"]
                  [ring-transit "0.1.3"]
                  [http-kit "2.1.19"]
-                 [compojure "1.3.2"]]
+                 [compojure "1.3.2"]
+                 [org.seleniumhq.selenium/selenium-java "2.45.0" :scope "test"]]
 
   :main zackzack.backend
   :uberjar-name "zackzack.jar"
